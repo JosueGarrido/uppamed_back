@@ -1,28 +1,29 @@
 {
-  "name": "backend",
+  "name": "uppamed-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Backend para UppaMed CRM",
+  "main": "api/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.js"
+    "start": "node api/index.js",
+    "dev": "nodemon api/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
-    "bcrypt": "^5.1.1",
-    "bcryptjs": "^3.0.2",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.2",
-    "mysql2": "^3.14.1",
-    "sequelize": "^6.37.7",
-    "serverless-http": "^3.2.0"
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "mysql2": "^3.6.5",
+    "sequelize": "^6.35.2",
+    "serverless-http": "^3.1.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "nodemon": "^2.0.22"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

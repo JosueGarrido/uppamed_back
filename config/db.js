@@ -1,4 +1,5 @@
 const { Sequelize } = require('sequelize');
+const mysql2 = require('mysql2'); // Requerido por Sequelize
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -12,6 +13,7 @@ const sequelize = new Sequelize(
     port: process.env.DB_PORT || 3306,
     dialect: 'mysql',
     logging: console.log, // Activar logs temporalmente para debug
+    dialectModule: mysql2, // Especificar el módulo mysql2 explícitamente
     dialectOptions: {
       connectTimeout: 60000,
       ssl: process.env.NODE_ENV === 'production' ? {
