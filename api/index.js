@@ -24,13 +24,24 @@ app.options('*', cors());
 // Middleware para parsear JSON
 app.use(express.json());
 
-// Rutas
-app.use('/auth', authRoutes);
-app.use('/tenants', tenantRoutes);
-app.use('/appointments', appointmentRoutes);
-app.use('/users', userRoutes);
-app.use('/medical-records', medicalRecordRoutes);
-app.use('/medical-exams', medicalExamRoutes);
+// Base path para la API
+const apiRouter = express.Router();
+
+// Rutas de la API
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/tenants', tenantRoutes);
+apiRouter.use('/appointments', appointmentRoutes);
+apiRouter.use('/users', userRoutes);
+apiRouter.use('/medical-records', medicalRecordRoutes);
+apiRouter.use('/medical-exams', medicalExamRoutes);
+
+// Montar todas las rutas bajo /api
+app.use('/', apiRouter);
+
+// Ruta de health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 // Conectar base de datos en cada ejecución
 sequelize.sync()
