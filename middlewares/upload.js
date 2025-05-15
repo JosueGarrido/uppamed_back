@@ -2,10 +2,12 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Crear carpeta si no existe
-const uploadsDir = path.join(__dirname, '../uploads');
+// Carpeta temporal compatible con Vercel (solo lectura fuera de /tmp)
+const uploadsDir = path.join('/tmp', 'uploads');
+
+// Crear la carpeta si no existe
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 // Configurar almacenamiento
