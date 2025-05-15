@@ -1,5 +1,4 @@
 const { Sequelize } = require('sequelize');
-const mysql = require('mysql2'); 
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -10,21 +9,48 @@ const sequelize = new Sequelize(
   process.env.DB_PASSWORD,
   {
     host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 3306,
     dialect: 'mysql',
-    logging: false, // Desactivar logs SQL en producción
+    logging: console.log, // Activar logs temporalmente para debug
     dialectOptions: {
-      ssl: {
+      connectTimeout: 60000,
+      ssl: process.env.NODE_ENV === 'production' ? {
         require: true,
         rejectUnauthorized: false
-      }
+      } : false
     },
     pool: {
-      max: 5,
+      max: 2,
       min: 0,
-      acquire: 30000,
-      idle: 10000
+      acquire: 60000,
+      idle: 10000,
+      evict: 1000
+    },
+    retry: {
+      match: [
+        /Deadlock/i,
+        /SequelizeConnectionError/,
+        /SequelizeConnectionRefusedError/,
+        /SequelizeHostNotFoundError/,
+        /SequelizeHostNotReachableError/,
+        /SequelizeInvalidConnectionError/,
+        /SequelizeConnectionTimedOutError/,
+        /TimeoutError/,
+        /ETIMEDOUT/
+      ],
+      max: 3
     }
   }
 );
+
+// Prueba de conexión
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log('✅ Conexión a la base de datos establecida correctamente.');
+  })
+  .catch(err => {
+    console.error('❌ Error conectando con la base de datos:', err);
+  });
 
 module.exports = sequelize;
