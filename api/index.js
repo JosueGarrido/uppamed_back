@@ -3,6 +3,7 @@ const express = require('express');
 const serverless = require('serverless-http');
 const dotenv = require('dotenv');
 const sequelize = require('../config/db');
+const cors = require('cors');
 
 const authRoutes = require('../routes/authRoutes');
 const tenantRoutes = require('../routes/tenantRoutes');
@@ -14,16 +15,24 @@ const medicalExamRoutes = require('../routes/medicalExamRoutes');
 dotenv.config();
 const app = express();
 
+// Configuración de CORS
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://uppamed-crm.vercel.app', 'https://uppamed.uppacloud.com'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 // Middleware para parsear JSON
 app.use(express.json());
 
 // Rutas
-app.use('/api/auth', authRoutes);
-app.use('/api/tenants', tenantRoutes);
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/medicalRecord', medicalRecordRoutes);
-app.use('/api/medicalExam', medicalExamRoutes);
+app.use('/auth', authRoutes);
+app.use('/tenants', tenantRoutes);
+app.use('/appointments', appointmentRoutes);
+app.use('/users', userRoutes);
+app.use('/medical-records', medicalRecordRoutes);
+app.use('/medical-exams', medicalExamRoutes);
 
 // Conectar base de datos en cada ejecución
 sequelize.sync()
