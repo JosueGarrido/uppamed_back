@@ -10,19 +10,31 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Validar que se proporcionen email y password
+    if (!email || !password) {
+      return res.status(400).json({ 
+        message: 'Email y contraseña son requeridos',
+        receivedData: { email: !!email, password: !!password }
+      });
+    }
+
+    console.log('Intentando login con email:', email); // Log para debugging
+
     // Buscar usuario por email
     const user = await User.findOne({ 
-      where: { email },
+      where: { email: email.toLowerCase() },
       attributes: { exclude: ['createdAt', 'updatedAt'] }
     });
 
     if (!user) {
+      console.log('Usuario no encontrado para el email:', email); // Log para debugging
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
     // Verificar contraseña
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
+      console.log('Contraseña inválida para el usuario:', email); // Log para debugging
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
@@ -42,6 +54,8 @@ router.post('/login', async (req, res) => {
     const userWithoutPassword = { ...user.toJSON() };
     delete userWithoutPassword.password;
 
+    console.log('Login exitoso para:', email); // Log para debugging
+
     res.json({ 
       token,
       user: userWithoutPassword,
@@ -49,7 +63,10 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Error en login:', error);
-    res.status(500).json({ message: 'Error en el servidor' });
+    res.status(500).json({ 
+      message: 'Error en el servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
