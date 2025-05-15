@@ -17,10 +17,11 @@ const app = express();
 
 // Configuración de CORS
 app.use(cors({
-  origin: ['*'],
+  origin: '*', // Esto permite cualquier origen
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false
+  allowedHeaders: ['X-Requested-With', 'Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400 // Cache preflight request for 1 day
 }));
 
 // Middleware para parsear JSON
