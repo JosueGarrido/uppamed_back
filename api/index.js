@@ -15,14 +15,11 @@ const medicalExamRoutes = require('../routes/medicalExamRoutes');
 dotenv.config();
 const app = express();
 
-// Configuración de CORS
-app.use(cors({
-  origin: '*', // Esto permite cualquier origen
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['X-Requested-With', 'Content-Type', 'Authorization'],
-  credentials: true,
-  maxAge: 86400 // Cache preflight request for 1 day
-}));
+// Configuración de CORS completamente abierta
+app.use(cors());
+
+// Asegurar que las solicitudes OPTIONS sean manejadas correctamente
+app.options('*', cors());
 
 // Middleware para parsear JSON
 app.use(express.json());
