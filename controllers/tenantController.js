@@ -2,6 +2,11 @@ const Tenant = require('../models/tenant');
 const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 
+// Utilidad para generar un CI aleatorio de 10 dígitos
+const generarIdentificacion = () => {
+  return Math.floor(1000000000 + Math.random() * 9000000000).toString();
+};
+
 // Crear un nuevo tenant (hospital)
 const createTenant = async (req, res) => {
   const { name, address } = req.body;
@@ -21,13 +26,17 @@ const createTenant = async (req, res) => {
 
     // Crear el usuario administrador
     const adminUsername = `admin_${name.toLowerCase().replace(/\s+/g, '_')}`;
-    const tempPassword = 'admin123'; // Puedes cambiarlo por uno aleatorio
+    const tempPassword = 'admin123';
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
     const adminUser = await User.create({
       username: adminUsername,
+      email: `${adminUsername}@admin.com`,
       password: hashedPassword,
       role: 'Administrador',
+      identification_number: generarIdentificacion(),
+      area: 'Administración',
+      specialty: 'Gestión',
       tenant_id: tenant.id,
     });
 
@@ -35,7 +44,8 @@ const createTenant = async (req, res) => {
       tenant,
       admin: {
         username: adminUser.username,
-        password: tempPassword, // En real, no deberías devolverla en producción
+        email: adminUser.email,
+        password: tempPassword, // ⚠️ en producción no deberías devolver esto
         role: adminUser.role,
       }
     });
