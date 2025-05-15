@@ -66,4 +66,84 @@ const getTenants = async (req, res) => {
   }
 };
 
-module.exports = { createTenant, getTenants };
+// Obtener un tenant por ID
+const getTenantById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const tenant = await Tenant.findByPk(id);
+    
+    if (!tenant) {
+      return res.status(404).json({ message: 'Tenant no encontrado' });
+    }
+
+    res.status(200).json(tenant);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener el tenant' });
+  }
+};
+
+// Actualizar un tenant
+const updateTenant = async (req, res) => {
+  const { id } = req.params;
+  const { name, address } = req.body;
+
+  if (!name && !address) {
+    return res.status(400).json({ message: 'Debe proporcionar al menos un campo para actualizar' });
+  }
+
+  try {
+    const tenant = await Tenant.findByPk(id);
+
+    if (!tenant) {
+      return res.status(404).json({ message: 'Tenant no encontrado' });
+    }
+
+    // Si se está actualizando el nombre, verificar que no exista otro tenant con ese nombre
+    if (name && name !== tenant.name) {
+      const existingTenant = await Tenant.findOne({ where: { name } });
+      if (existingTenant) {
+        return res.status(409).json({ message: 'Ya existe un tenant con ese nombre' });
+      }
+    }
+
+    await tenant.update({ name, address });
+
+    res.status(200).json(tenant);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualizar el tenant' });
+  }
+};
+
+// Eliminar un tenant
+const deleteTenant = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const tenant = await Tenant.findByPk(id);
+
+    if (!tenant) {
+      return res.status(404).json({ message: 'Tenant no encontrado' });
+    }
+
+    // Verificar si hay usuarios asociados al tenant
+    const usersCount = await User.count({ where: { tenant_id: id } });
+    
+    if (usersCount > 0) {
+      return res.status(400).json({ 
+        message: 'No se puede eliminar el tenant porque tiene usuarios asociados. Elimine primero los usuarios.' 
+      });
+    }
+
+    await tenant.destroy();
+
+    res.status(200).json({ message: 'Tenant eliminado exitosamente' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al eliminar el tenant' });
+  }
+};
+
+module.exports = { createTenant, getTenants, getTenantById, updateTenant, deleteTenant };
