@@ -18,35 +18,37 @@ const app = express();
 // Configuración de CORS completamente abierta
 app.use(cors());
 
-// Asegurar que las solicitudes OPTIONS sean manejadas correctamente
-app.options('*', cors());
-
 // Middleware para parsear JSON
 app.use(express.json());
 
-// Base path para la API
-const apiRouter = express.Router();
-
-// Rutas de la API
-apiRouter.use('/auth', authRoutes);
-apiRouter.use('/tenants', tenantRoutes);
-apiRouter.use('/appointments', appointmentRoutes);
-apiRouter.use('/users', userRoutes);
-apiRouter.use('/medical-records', medicalRecordRoutes);
-apiRouter.use('/medical-exams', medicalExamRoutes);
-
-// Montar todas las rutas bajo /api
-app.use('/', apiRouter);
+// Rutas
+app.use('/auth', authRoutes);
+app.use('/tenants', tenantRoutes);
+app.use('/appointments', appointmentRoutes);
+app.use('/users', userRoutes);
+app.use('/medical-records', medicalRecordRoutes);
+app.use('/medical-exams', medicalExamRoutes);
 
 // Ruta de health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Ruta por defecto
+app.get('/', (req, res) => {
+  res.json({ message: 'UppaMed API' });
+});
+
 // Conectar base de datos en cada ejecución
 sequelize.sync()
   .then(() => console.log('📦 Base de datos sincronizada en Vercel'))
   .catch((err) => console.error('❌ Error conectando con DB en Vercel', err));
+
+// Manejo de errores
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Error interno del servidor' });
+});
 
 // Exportar como handler para Vercel
 module.exports = app;
