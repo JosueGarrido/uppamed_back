@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { User } = require('../models/user');
+const { User } = require('../models');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const authMiddleware = require('../middleware/authMiddleware');
@@ -11,7 +11,11 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     // Buscar usuario por email
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ 
+      where: { email },
+      attributes: { exclude: ['createdAt', 'updatedAt'] }
+    });
+
     if (!user) {
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
@@ -34,7 +38,15 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    res.json({ token });
+    // Enviar respuesta sin la contraseña
+    const userWithoutPassword = { ...user.toJSON() };
+    delete userWithoutPassword.password;
+
+    res.json({ 
+      token,
+      user: userWithoutPassword,
+      message: 'Login exitoso'
+    });
   } catch (error) {
     console.error('Error en login:', error);
     res.status(500).json({ message: 'Error en el servidor' });
@@ -44,9 +56,8 @@ router.post('/login', async (req, res) => {
 // Get authenticated user data
 router.get('/me', authMiddleware, async (req, res) => {
   try {
-    // req.user contiene el ID del usuario del token JWT
     const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ['password'] } // Excluir el campo password
+      attributes: { exclude: ['password', 'createdAt', 'updatedAt'] }
     });
 
     if (!user) {
