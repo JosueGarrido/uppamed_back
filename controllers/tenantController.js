@@ -128,21 +128,16 @@ const deleteTenant = async (req, res) => {
       return res.status(404).json({ message: 'Tenant no encontrado' });
     }
 
-    // Verificar si hay usuarios asociados al tenant
-    const usersCount = await User.count({ where: { tenant_id: id } });
-    
-    if (usersCount > 0) {
-      return res.status(400).json({ 
-        message: 'No se puede eliminar el tenant porque tiene usuarios asociados. Elimine primero los usuarios.' 
-      });
-    }
+    // Eliminar todos los usuarios asociados al tenant
+    await User.destroy({ where: { tenant_id: id } });
 
+    // Eliminar el tenant
     await tenant.destroy();
 
-    res.status(200).json({ message: 'Tenant eliminado exitosamente' });
+    res.status(200).json({ message: 'Tenant y usuarios asociados eliminados exitosamente' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error al eliminar el tenant' });
+    res.status(500).json({ message: 'Error al eliminar el tenant y sus usuarios asociados' });
   }
 };
 
