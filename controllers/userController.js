@@ -79,4 +79,72 @@ const registerUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser };
+// Listar usuarios de un tenant
+const listUsersByTenant = async (req, res) => {
+  const { tenantId } = req.params;
+  try {
+    const users = await User.findAll({
+      where: { tenant_id: tenantId },
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']]
+    });
+    res.status(200).json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener los usuarios del tenant' });
+  }
+};
+
+// Obtener usuario por ID
+const getUserById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await User.findByPk(id, { attributes: { exclude: ['password'] } });
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener el usuario' });
+  }
+};
+
+// Actualizar usuario
+const updateUser = async (req, res) => {
+  const { id } = req.params;
+  const { username, email, role, area, specialty } = req.body;
+  try {
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    // Solo Super Admin puede cambiar rol a Administrador
+    if (role === 'Administrador' && req.user.role !== 'Super Admin') {
+      return res.status(403).json({ message: 'Solo el Super Admin puede asignar el rol Administrador' });
+    }
+    await user.update({ username, email, role, area, specialty });
+    res.status(200).json({ message: 'Usuario actualizado', user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualizar el usuario' });
+  }
+};
+
+// Eliminar usuario
+const deleteUser = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    await user.destroy();
+    res.status(200).json({ message: 'Usuario eliminado' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al eliminar el usuario' });
+  }
+};
+
+module.exports = { registerUser, listUsersByTenant, getUserById, updateUser, deleteUser };
