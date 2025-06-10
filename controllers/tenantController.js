@@ -128,8 +128,8 @@ const deleteTenant = async (req, res) => {
       return res.status(404).json({ message: 'Tenant no encontrado' });
     }
 
-    // Eliminar todos los usuarios asociados al tenant
-    await User.destroy({ where: { tenant_id: id } });
+    // Eliminar todos los usuarios asociados al tenant excepto los Super Admin
+    await User.destroy({ where: { tenant_id: id, role: { [require('sequelize').Op.ne]: 'Super Admin' } } });
 
     // Eliminar el tenant
     await tenant.destroy();
