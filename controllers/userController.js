@@ -2,9 +2,14 @@ const User = require('../models/user');
 const Tenant = require('../models/tenant');
 const bcrypt = require('bcryptjs');
 
+// Utilidad para generar un CI aleatorio de 10 dígitos
+const generarIdentificacion = () => {
+  return Math.floor(1000000000 + Math.random() * 9000000000).toString();
+};
+
 const registerUser = async (req, res) => {
   const { tenantId } = req.params;
-  const { username, password, role, area, specialty } = req.body;
+  const { username, password, role, area, specialty, email } = req.body;
 
   try {
     // Verificar si el tenant existe
@@ -43,10 +48,19 @@ const registerUser = async (req, res) => {
       }
     }
 
-    // Verificar si el username ya existe
+    // Validar email
+    if (!email) {
+      return res.status(400).json({ message: 'El email es obligatorio' });
+    }
+
+    // Verificar si el username o email ya existe
     const existingUser = await User.findOne({ where: { username } });
     if (existingUser) {
       return res.status(400).json({ message: 'El nombre de usuario ya está en uso' });
+    }
+    const existingEmail = await User.findOne({ where: { email } });
+    if (existingEmail) {
+      return res.status(400).json({ message: 'El email ya está en uso' });
     }
 
     // Hashear contraseña
@@ -56,8 +70,10 @@ const registerUser = async (req, res) => {
     // Crear usuario
     const user = await User.create({
       username,
+      email,
       password: hashedPassword,
       role,
+      identification_number: generarIdentificacion(),
       tenant_id: tenant.id,
       area: role === 'Especialista' ? area : null,
       specialty: role === 'Especialista' ? specialty : null,
@@ -68,9 +84,11 @@ const registerUser = async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
+        email: user.email,
         role: user.role,
         area: user.area,
         specialty: user.specialty,
+        identification_number: user.identification_number,
       },
     });
   } catch (error) {
