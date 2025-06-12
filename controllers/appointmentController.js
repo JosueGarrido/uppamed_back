@@ -3,11 +3,16 @@ const User = require('../models/user');
 
 // Crear una nueva cita
 const createAppointment = async (req, res) => {
-  const { date, specialist_id } = req.body;
+  const { date, specialist_id, patient_id: bodyPatientId } = req.body;
 
-  // Validar que el usuario logueado tiene la información correcta
-  const patient_id = req.user?.userId;
+  let patient_id;
   const tenant_id = req.user?.tenant_id;
+
+  if (req.user.role === 'Paciente') {
+    patient_id = req.user?.userId;
+  } else if (['Administrador', 'Super Admin'].includes(req.user.role)) {
+    patient_id = bodyPatientId;
+  }
 
   // Verificar que el paciente y el tenant no sean nulos
   if (!patient_id || !tenant_id) {
