@@ -4,6 +4,9 @@ const { User } = require('../models');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const authMiddleware = require('../middleware/authMiddleware');
+const { getSuperAdminSummary } = require('../controllers/dashboardController');
+const authenticate = require('../middlewares/auth');
+const checkRole = require('../middlewares/checkRole');
 
 // Login route
 router.post('/login', async (req, res) => {
@@ -87,5 +90,8 @@ router.get('/me', authMiddleware, async (req, res) => {
     res.status(500).json({ message: 'Error en el servidor' });
   }
 });
+
+// Resumen dashboard Super Admin
+router.get('/dashboard/super-admin/summary', authenticate, checkRole('Super Admin'), getSuperAdminSummary);
 
 module.exports = router;
