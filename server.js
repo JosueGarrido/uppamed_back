@@ -13,9 +13,9 @@ const cors = require('cors');
 dotenv.config();
 const app = express();
 
-// Configurar CORS para permitir frontend local y credenciales
+// CORS: Permitir cualquier origen y credenciales para desarrollo
 app.use(cors({
-  origin: 'http://localhost:3000', // Cambia si tu frontend corre en otro puerto
+  origin: (origin, callback) => callback(null, true),
   credentials: true
 }));
 
@@ -24,12 +24,12 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Rutas
-app.use('/api/auth', authRoutes);
-app.use('/api/tenants', tenantRoutes);
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/medicalRecord', medicalRecordRoutes);
-app.use('/api/medicalExam', medicalExamRoutes);
+app.use('/auth', authRoutes);
+app.use('/tenants', tenantRoutes);
+app.use('/appointments', appointmentRoutes);
+app.use('/users', userRoutes);
+app.use('/medicalRecord', medicalRecordRoutes);
+app.use('/medicalExam', medicalExamRoutes);
 
 // Iniciar el servidor
 const PORT = process.env.PORT || 3000;  // Usa el puerto desde las variables de entorno o 3000 por defecto
