@@ -12,6 +12,15 @@ const Appointment = sequelize.define('Appointment', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  reason: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  status: {
+    type: DataTypes.ENUM('pendiente', 'confirmada', 'completada', 'cancelada'),
+    allowNull: false,
+    defaultValue: 'pendiente',
+  },
   specialist_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
