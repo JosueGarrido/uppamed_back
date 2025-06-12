@@ -110,7 +110,11 @@ const getAppointmentsForTenant = async (req, res) => {
     }
     const appointments = await Appointment.findAll({
       where: { tenant_id: tenantId },
-      order: [['date', 'DESC']]
+      order: [['date', 'DESC']],
+      include: [
+        { model: User, as: 'specialist', attributes: ['id', 'username', 'email', 'specialty'] },
+        { model: User, as: 'patient', attributes: ['id', 'username', 'email', 'identification_number'] }
+      ]
     });
     res.status(200).json(appointments);
   } catch (error) {
