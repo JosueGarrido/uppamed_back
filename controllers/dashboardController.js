@@ -40,4 +40,30 @@ const getSuperAdminSummary = async (req, res) => {
   }
 };
 
-module.exports = { getSuperAdminSummary }; 
+const getTenantsActivity = async (req, res) => {
+  try {
+    const tenants = await Tenant.findAll();
+    const activity = await Promise.all(
+      tenants.map(async (tenant) => {
+        const users = await User.count({ where: { tenant_id: tenant.id } });
+        const especialistas = await User.count({ where: { tenant_id: tenant.id, role: 'Especialista' } });
+        const pacientes = await User.count({ where: { tenant_id: tenant.id, role: 'Paciente' } });
+        const citas = await Appointment.count({ where: { tenant_id: tenant.id } });
+        return {
+          tenantId: tenant.id,
+          tenantName: tenant.name,
+          users,
+          especialistas,
+          pacientes,
+          citas,
+        };
+      })
+    );
+    res.json(activity);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener la actividad por tenant' });
+  }
+};
+
+module.exports = { getSuperAdminSummary, getTenantsActivity }; 

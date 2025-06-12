@@ -4,7 +4,7 @@ const { User } = require('../models');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const authMiddleware = require('../middleware/authMiddleware');
-const { getSuperAdminSummary } = require('../controllers/dashboardController');
+const { getSuperAdminSummary, getTenantsActivity } = require('../controllers/dashboardController');
 const authenticate = require('../middlewares/auth');
 const checkRole = require('../middlewares/checkRole');
 
@@ -93,5 +93,8 @@ router.get('/me', authMiddleware, async (req, res) => {
 
 // Resumen dashboard Super Admin
 router.get('/dashboard/super-admin/summary', authenticate, checkRole('Super Admin'), getSuperAdminSummary);
+
+// Actividad por tenant para dashboard Super Admin
+router.get('/dashboard/super-admin/tenants-activity', authenticate, checkRole('Super Admin'), getTenantsActivity);
 
 module.exports = router;
