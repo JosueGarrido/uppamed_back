@@ -39,6 +39,19 @@ const loginUser = async (req, res) => {
   }
 };
 
+const getCookies = (req) => {
+  if (req.cookies) return req.cookies;
+  const cookieHeader = req.headers.cookie;
+  let cookies = {};
+  if (cookieHeader) {
+    cookieHeader.split(';').forEach(cookie => {
+      const [name, ...rest] = cookie.trim().split('=');
+      cookies[name] = decodeURIComponent(rest.join('='));
+    });
+  }
+  return cookies;
+};
+
 // Impersonar: Super Admin obtiene un token como admin de un tenant
 const impersonateTenantAdmin = async (req, res) => {
   const { tenantId } = req.params;
@@ -60,8 +73,10 @@ const impersonateTenantAdmin = async (req, res) => {
       { expiresIn: '2h' }
     );
 
+    // Obtener cookies de forma robusta
+    const cookies = getCookies(req);
     // Guardar el token original del Super Admin en una cookie httpOnly si no existe
-    if (!req.cookies.original_token && req.headers.authorization) {
+    if (!cookies.original_token && req.headers.authorization) {
       const originalToken = req.headers.authorization.replace('Bearer ', '');
       res.cookie('original_token', originalToken, {
         httpOnly: true,
@@ -80,7 +95,9 @@ const impersonateTenantAdmin = async (req, res) => {
 
 // Endpoint para restaurar la sesión original del Super Admin
 const restoreImpersonation = (req, res) => {
-  const originalToken = req.cookies.original_token;
+  // Obtener cookies de forma robusta
+  const cookies = getCookies(req);
+  const originalToken = cookies.original_token;
   if (!originalToken) {
     return res.status(400).json({ message: 'No hay sesión original para restaurar' });
   }
