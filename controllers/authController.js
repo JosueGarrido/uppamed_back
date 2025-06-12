@@ -73,8 +73,8 @@ const impersonateTenantAdmin = async (req, res) => {
 
     res.json({ token: adminToken, user: { id: admin.id, email: admin.email, role: admin.role, tenant_id: admin.tenant_id } });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al impersonar al admin del tenant' });
+    console.error('Error en impersonateTenantAdmin:', error);
+    res.status(500).json({ message: 'Error al impersonar al admin del tenant', error: error.message, stack: error.stack });
   }
 };
 
