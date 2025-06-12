@@ -7,6 +7,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const { getSuperAdminSummary, getTenantsActivity } = require('../controllers/dashboardController');
 const authenticate = require('../middlewares/auth');
 const checkRole = require('../middlewares/checkRole');
+const { impersonateTenantAdmin } = require('../controllers/authController');
 
 // Login route
 router.post('/login', async (req, res) => {
@@ -96,5 +97,8 @@ router.get('/dashboard/super-admin/summary', authenticate, checkRole('Super Admi
 
 // Actividad por tenant para dashboard Super Admin
 router.get('/dashboard/super-admin/tenants-activity', authenticate, checkRole('Super Admin'), getTenantsActivity);
+
+// Impersonar admin de un tenant
+router.post('/impersonate/:tenantId', authenticate, checkRole('Super Admin'), impersonateTenantAdmin);
 
 module.exports = router;
