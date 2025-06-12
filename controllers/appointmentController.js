@@ -123,9 +123,78 @@ const getAppointmentsForTenant = async (req, res) => {
   }
 };
 
+// Obtener una cita por ID
+const getAppointmentById = async (req, res) => {
+  const { appointmentId } = req.params;
+  try {
+    const appointment = await Appointment.findByPk(appointmentId, {
+      include: [
+        { model: User, as: 'specialist', attributes: ['id', 'username', 'email', 'specialty'] },
+        { model: User, as: 'patient', attributes: ['id', 'username', 'email', 'identification_number'] }
+      ]
+    });
+    if (!appointment) {
+      return res.status(404).json({ message: 'Cita no encontrada' });
+    }
+    res.status(200).json(appointment);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener la cita' });
+  }
+};
+
+// Actualizar una cita por ID
+const updateAppointment = async (req, res) => {
+  const { appointmentId } = req.params;
+  const { date, specialist_id, patient_id, notes, status } = req.body;
+  try {
+    const appointment = await Appointment.findByPk(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Cita no encontrada' });
+    }
+    // Permitir solo a admin, super admin, o dueño modificar
+    if (!['Administrador', 'Super Admin'].includes(req.user.role) && req.user.userId !== appointment.patient_id && req.user.userId !== appointment.specialist_id) {
+      return res.status(403).json({ message: 'Acceso denegado' });
+    }
+    if (date) appointment.date = date;
+    if (specialist_id) appointment.specialist_id = specialist_id;
+    if (patient_id) appointment.patient_id = patient_id;
+    if (notes !== undefined) appointment.notes = notes;
+    if (status) appointment.status = status;
+    await appointment.save();
+    res.status(200).json({ message: 'Cita actualizada', appointment });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualizar la cita' });
+  }
+};
+
+// Eliminar una cita por ID
+const deleteAppointment = async (req, res) => {
+  const { appointmentId } = req.params;
+  try {
+    const appointment = await Appointment.findByPk(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Cita no encontrada' });
+    }
+    // Permitir solo a admin, super admin, o dueño eliminar
+    if (!['Administrador', 'Super Admin'].includes(req.user.role) && req.user.userId !== appointment.patient_id && req.user.userId !== appointment.specialist_id) {
+      return res.status(403).json({ message: 'Acceso denegado' });
+    }
+    await appointment.destroy();
+    res.status(200).json({ message: 'Cita eliminada' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al eliminar la cita' });
+  }
+};
+
 module.exports = {
   createAppointment,
   getAppointmentsForUser,
   updateAppointmentNotes,
   getAppointmentsForTenant,
+  getAppointmentById,
+  updateAppointment,
+  deleteAppointment,
 };

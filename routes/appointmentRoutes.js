@@ -1,5 +1,5 @@
 const express = require('express');
-const { createAppointment, getAppointmentsForUser, updateAppointmentNotes, getAppointmentsForTenant } = require('../controllers/appointmentController');
+const { createAppointment, getAppointmentsForUser, updateAppointmentNotes, getAppointmentsForTenant, getAppointmentById, updateAppointment, deleteAppointment } = require('../controllers/appointmentController');
 const authenticate = require('../middlewares/auth');
 const checkRole = require('../middlewares/checkRole');
 
@@ -16,5 +16,10 @@ router.put('/:appointmentId/notes', authenticate, checkRole('Especialista'), upd
 
 // Obtener todas las citas de un tenant (solo admin o super admin)
 router.get('/:tenantId/all', authenticate, checkRole(['Administrador', 'Super Admin']), getAppointmentsForTenant);
+
+// CRUD de cita por ID
+router.get('/appointments/:appointmentId', authenticate, getAppointmentById);
+router.put('/appointments/:appointmentId', authenticate, updateAppointment);
+router.delete('/appointments/:appointmentId', authenticate, deleteAppointment);
 
 module.exports = router;
