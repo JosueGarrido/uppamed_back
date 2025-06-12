@@ -103,7 +103,8 @@ const restoreImpersonation = (req, res) => {
   }
   // Eliminar la cookie
   res.clearCookie('original_token', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
-  res.json({ token: originalToken });
+  // Siempre devolver un JSON con el token
+  return res.json({ token: originalToken });
 };
 
 module.exports = { loginUser, impersonateTenantAdmin, restoreImpersonation };
