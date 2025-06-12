@@ -13,9 +13,9 @@ const cors = require('cors');
 dotenv.config();
 const app = express();
 
-// CORS: Permitir cualquier origen y credenciales para pruebas temporales
+// CORS: Permitir solo el origen local y credenciales para desarrollo
 app.use(cors({
-  origin: '*',
+  origin: 'http://localhost:3000',
   credentials: true
 }));
 
