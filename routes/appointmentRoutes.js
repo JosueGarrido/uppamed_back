@@ -5,8 +5,8 @@ const checkRole = require('../middlewares/checkRole');
 
 const router = express.Router();
 
-// Crear una cita (solo paciente puede crear)
-router.post('/:tenantId/appointments', authenticate, checkRole('Paciente'), createAppointment);
+// Crear una cita (paciente, admin o super admin pueden crear)
+router.post('/:tenantId/appointments', authenticate, checkRole(['Paciente', 'Administrador', 'Super Admin']), createAppointment);
 
 // Ver las citas (paciente ve sus citas, especialista ve sus citas asignadas)
 router.get('/', authenticate, getAppointmentsForUser);
