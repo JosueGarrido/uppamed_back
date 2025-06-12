@@ -1,6 +1,7 @@
 const Tenant = require('../models/tenant');
 const User = require('../models/user');
 const bcrypt = require('bcryptjs');
+const TenantConfig = require('../models/tenantConfig');
 
 // Utilidad para generar un CI aleatorio de 10 dígitos
 const generarIdentificacion = () => {
@@ -141,4 +142,31 @@ const deleteTenant = async (req, res) => {
   }
 };
 
-module.exports = { createTenant, getTenants, getTenantById, updateTenant, deleteTenant };
+// Obtener configuración de un tenant
+const getTenantConfig = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const configs = await TenantConfig.findAll({ where: { tenant_id: id } });
+    res.json(configs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener la configuración del tenant' });
+  }
+};
+
+// Actualizar configuración de un tenant (recibe un array de {key, value})
+const updateTenantConfig = async (req, res) => {
+  const { id } = req.params;
+  const { configs } = req.body; // [{key, value}]
+  try {
+    // Borra la config anterior y crea la nueva (simple y robusto)
+    await TenantConfig.destroy({ where: { tenant_id: id } });
+    const created = await TenantConfig.bulkCreate(configs.map(cfg => ({ ...cfg, tenant_id: id })));
+    res.json(created);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualizar la configuración del tenant' });
+  }
+};
+
+module.exports = { createTenant, getTenants, getTenantById, updateTenant, deleteTenant, getTenantConfig, updateTenantConfig };
