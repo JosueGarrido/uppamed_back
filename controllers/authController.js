@@ -80,8 +80,8 @@ const impersonateTenantAdmin = async (req, res) => {
       const originalToken = req.headers.authorization.replace('Bearer ', '');
       res.cookie('original_token', originalToken, {
         httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+        secure: true,
         maxAge: 2 * 60 * 60 * 1000 // 2 horas
       });
     }
@@ -102,7 +102,7 @@ const restoreImpersonation = (req, res) => {
     return res.status(400).json({ message: 'No hay sesión original para restaurar' });
   }
   // Eliminar la cookie
-  res.clearCookie('original_token', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
+  res.clearCookie('original_token', { httpOnly: true, sameSite: 'none', secure: true });
   // Siempre devolver un JSON con el token
   return res.json({ token: originalToken });
 };
