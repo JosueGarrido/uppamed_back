@@ -49,7 +49,7 @@ const impersonateTenantAdmin = async (req, res) => {
       return res.status(404).json({ message: 'No se encontró un administrador para este tenant' });
     }
     // Genera un token JWT como si fueras ese admin
-    const token = jwt.sign(
+    const adminToken = jwt.sign(
       {
         id: admin.id,
         email: admin.email,
@@ -59,11 +59,34 @@ const impersonateTenantAdmin = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '2h' }
     );
-    res.json({ token, user: { id: admin.id, email: admin.email, role: admin.role, tenant_id: admin.tenant_id } });
+
+    // Guardar el token original del Super Admin en una cookie httpOnly si no existe
+    if (!req.cookies.original_token && req.headers.authorization) {
+      const originalToken = req.headers.authorization.replace('Bearer ', '');
+      res.cookie('original_token', originalToken, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 2 * 60 * 60 * 1000 // 2 horas
+      });
+    }
+
+    res.json({ token: adminToken, user: { id: admin.id, email: admin.email, role: admin.role, tenant_id: admin.tenant_id } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al impersonar al admin del tenant' });
   }
 };
 
-module.exports = { loginUser, impersonateTenantAdmin };
+// Endpoint para restaurar la sesión original del Super Admin
+const restoreImpersonation = (req, res) => {
+  const originalToken = req.cookies.original_token;
+  if (!originalToken) {
+    return res.status(400).json({ message: 'No hay sesión original para restaurar' });
+  }
+  // Eliminar la cookie
+  res.clearCookie('original_token', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
+  res.json({ token: originalToken });
+};
+
+module.exports = { loginUser, impersonateTenantAdmin, restoreImpersonation };

@@ -7,7 +7,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const { getSuperAdminSummary, getTenantsActivity } = require('../controllers/dashboardController');
 const authenticate = require('../middlewares/auth');
 const checkRole = require('../middlewares/checkRole');
-const { impersonateTenantAdmin } = require('../controllers/authController');
+const { impersonateTenantAdmin, restoreImpersonation } = require('../controllers/authController');
 
 // Login route
 router.post('/login', async (req, res) => {
@@ -100,5 +100,8 @@ router.get('/dashboard/super-admin/tenants-activity', authenticate, checkRole('S
 
 // Impersonar admin de un tenant
 router.post('/impersonate/:tenantId', authenticate, checkRole('Super Admin'), impersonateTenantAdmin);
+
+// Restaurar sesión original del Super Admin
+router.post('/restore-impersonation', authenticate, restoreImpersonation);
 
 module.exports = router;

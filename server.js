@@ -7,15 +7,14 @@ const appointmentRoutes = require('./routes/appointmentRoutes');
 const userRoutes = require('./routes/userRoutes');
 const medicalRecordRoutes = require('./routes/medicalRecordRoutes');
 const medicalExamRoutes = require('./routes/medicalExamRoutes');
-
-
-
+const cookieParser = require('cookie-parser');
 
 dotenv.config();
 const app = express();
 
 // Middleware para parsear JSON
 app.use(express.json());
+app.use(cookieParser());
 
 // Rutas
 app.use('/api/auth', authRoutes);
