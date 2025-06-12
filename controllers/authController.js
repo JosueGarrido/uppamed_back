@@ -95,16 +95,15 @@ const impersonateTenantAdmin = async (req, res) => {
 
 // Endpoint para restaurar la sesión original del Super Admin
 const restoreImpersonation = (req, res) => {
-  // Obtener cookies de forma robusta
-  const cookies = getCookies(req);
-  const originalToken = cookies.original_token;
-  if (!originalToken) {
-    return res.status(400).json({ message: 'No hay sesión original para restaurar' });
+  // Si el usuario autenticado es Super Admin, devuelve el token recibido
+  if (req.user && req.user.role === 'Super Admin' && req.headers.authorization) {
+    const originalToken = req.headers.authorization.replace('Bearer ', '');
+    // Elimina la cookie si existe (opcional)
+    res.clearCookie('original_token', { httpOnly: true, sameSite: 'none', secure: true });
+    return res.json({ token: originalToken });
   }
-  // Eliminar la cookie
-  res.clearCookie('original_token', { httpOnly: true, sameSite: 'none', secure: true });
-  // Siempre devolver un JSON con el token
-  return res.json({ token: originalToken });
+  // Si no, responde 400
+  return res.status(400).json({ message: 'No hay sesión original para restaurar' });
 };
 
 module.exports = { loginUser, impersonateTenantAdmin, restoreImpersonation };
