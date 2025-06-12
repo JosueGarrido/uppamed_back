@@ -75,13 +75,13 @@ const impersonateTenantAdmin = async (req, res) => {
 
     // Obtener cookies de forma robusta
     const cookies = getCookies(req);
-    // Guardar SIEMPRE el token original del Super Admin en una cookie httpOnly
-    if (req.headers.authorization) {
+    // Guardar la cookie original_token SOLO si el usuario autenticado es Super Admin
+    if (req.user && req.user.role === 'Super Admin' && req.headers.authorization) {
       const originalToken = req.headers.authorization.replace('Bearer ', '');
       res.cookie('original_token', originalToken, {
         httpOnly: true,
-        sameSite: 'none',
-        secure: true,
+        sameSite: 'none', // Necesario para cross-domain
+        secure: true,     // Necesario para https
         maxAge: 2 * 60 * 60 * 1000 // 2 horas
       });
     }
