@@ -93,8 +93,30 @@ const updateAppointmentNotes = async (req, res) => {
   }
 };
 
+// Obtener todas las citas de un tenant (solo para Administrador o Super Admin)
+const getAppointmentsForTenant = async (req, res) => {
+  const { tenantId } = req.params;
+  try {
+    if (!tenantId) {
+      return res.status(400).json({ message: 'Falta tenantId' });
+    }
+    if (!['Administrador', 'Super Admin'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'Acceso denegado' });
+    }
+    const appointments = await Appointment.findAll({
+      where: { tenant_id: tenantId },
+      order: [['date', 'DESC']]
+    });
+    res.status(200).json(appointments);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener las citas del tenant' });
+  }
+};
+
 module.exports = {
   createAppointment,
   getAppointmentsForUser,
   updateAppointmentNotes,
+  getAppointmentsForTenant,
 };

@@ -1,5 +1,5 @@
 const express = require('express');
-const { createAppointment, getAppointmentsForUser, updateAppointmentNotes } = require('../controllers/appointmentController');
+const { createAppointment, getAppointmentsForUser, updateAppointmentNotes, getAppointmentsForTenant } = require('../controllers/appointmentController');
 const authenticate = require('../middlewares/auth');
 const checkRole = require('../middlewares/checkRole');
 
@@ -13,5 +13,8 @@ router.get('/', authenticate, getAppointmentsForUser);
 
 // Modificar notas de la cita (solo especialista puede hacerlo)
 router.put('/:appointmentId/notes', authenticate, checkRole('Especialista'), updateAppointmentNotes);
+
+// Obtener todas las citas de un tenant (solo admin o super admin)
+router.get('/:tenantId/all', authenticate, checkRole(['Administrador', 'Super Admin']), getAppointmentsForTenant);
 
 module.exports = router;
