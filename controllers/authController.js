@@ -75,8 +75,8 @@ const impersonateTenantAdmin = async (req, res) => {
 
     // Obtener cookies de forma robusta
     const cookies = getCookies(req);
-    // Guardar el token original del Super Admin en una cookie httpOnly si no existe
-    if (!cookies.original_token && req.headers.authorization) {
+    // Guardar SIEMPRE el token original del Super Admin en una cookie httpOnly
+    if (req.headers.authorization) {
       const originalToken = req.headers.authorization.replace('Bearer ', '');
       res.cookie('original_token', originalToken, {
         httpOnly: true,
