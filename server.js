@@ -13,9 +13,9 @@ const cors = require('cors');
 dotenv.config();
 const app = express();
 
-// CORS: Permitir cualquier origen y credenciales para desarrollo
+// CORS: Permitir cualquier origen y credenciales para pruebas temporales
 app.use(cors({
-  origin: (origin, callback) => callback(null, true),
+  origin: '*',
   credentials: true
 }));
 
