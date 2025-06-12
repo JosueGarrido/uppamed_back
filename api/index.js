@@ -29,7 +29,7 @@ app.use((req, res, next) => {
 });
 
 // Configuración de CORS completamente abierta
-app.use(cors());
+//app.use(cors());
 
 // Middleware para parsear JSON
 app.use(express.json());
