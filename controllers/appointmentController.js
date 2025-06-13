@@ -3,7 +3,7 @@ const User = require('../models/user');
 
 // Crear una nueva cita
 const createAppointment = async (req, res) => {
-  const { date, specialist_id, patient_id: bodyPatientId } = req.body;
+  const { date, specialist_id, patient_id: bodyPatientId, reason } = req.body;
 
   let patient_id;
   const tenant_id = req.user?.tenant_id;
@@ -38,6 +38,7 @@ const createAppointment = async (req, res) => {
       specialist_id,
       patient_id,
       tenant_id,
+      reason,
     });
 
     res.status(201).json({ message: 'Cita agendada correctamente', appointment });
@@ -146,7 +147,7 @@ const getAppointmentById = async (req, res) => {
 // Actualizar una cita por ID
 const updateAppointment = async (req, res) => {
   const { appointmentId } = req.params;
-  const { date, specialist_id, patient_id, notes, status } = req.body;
+  const { date, specialist_id, patient_id, notes, status, reason } = req.body;
   try {
     const appointment = await Appointment.findByPk(appointmentId);
     if (!appointment) {
@@ -161,6 +162,7 @@ const updateAppointment = async (req, res) => {
     if (patient_id) appointment.patient_id = patient_id;
     if (notes !== undefined) appointment.notes = notes;
     if (status) appointment.status = status;
+    if (reason !== undefined) appointment.reason = reason;
     await appointment.save();
     res.status(200).json({ message: 'Cita actualizada', appointment });
   } catch (error) {
