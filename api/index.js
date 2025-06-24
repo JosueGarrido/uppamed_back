@@ -55,7 +55,7 @@ app.get('/', (req, res) => {
 // Conectar base de datos en cada ejecución
 sequelize.sync()
   .then(() => console.log('📦 Base de datos sincronizada en Vercel'))
-  .catch((err) => console.error('❌ Error conectando con DB en Vercel', err));
+  .catch((err) => console.error('❌  Error conectando con DB en Vercel', err));
 
 // Manejo de errores
 app.use((err, req, res, next) => {
