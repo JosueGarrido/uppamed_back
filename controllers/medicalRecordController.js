@@ -50,7 +50,7 @@ const createMedicalRecord = async (req, res) => {
 
 // Obtener los registros médicos de un paciente (solo el paciente o el especialista que lo atendió)
 const getMedicalRecordsForPatient = async (req, res) => {
-  const userId = req.user.userId;
+  const userId = req.user.id;
   const tenantId = req.user.tenant_id;
 
   try {
@@ -67,7 +67,7 @@ const getMedicalRecordsForPatient = async (req, res) => {
 
 // Obtener los registros médicos de un especialista (solo los creados por el especialista)
 const getMedicalRecordsForSpecialist = async (req, res) => {
-  const userId = req.user.userId;
+  const userId = req.user.id;
   const tenantId = req.user.tenant_id;
 
   try {
