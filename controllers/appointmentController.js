@@ -63,6 +63,9 @@ const getAppointmentsForUser = async (req, res) => {
     } else if (req.user.role === 'Especialista') {
       appointments = await Appointment.findAll({
         where: { specialist_id: userId, tenant_id: tenantId },
+        include: [
+          { model: User, as: 'patient', attributes: ['id', 'username', 'email', 'identification_number'] }
+        ]
       });
     } else {
       return res.status(403).json({ message: 'Acceso denegado' });
