@@ -51,7 +51,7 @@ const createAppointment = async (req, res) => {
 // Obtener las citas del usuario (paciente o especialista)
 const getAppointmentsForUser = async (req, res) => {
   console.log('🩺 getAppointmentsForUser - req.user:', req.user);
-  const userId = req.user.userId;
+  const userId = req.user.id;
   const tenantId = req.user.tenant_id;
 
   try {
@@ -78,7 +78,7 @@ const getAppointmentsForUser = async (req, res) => {
 const updateAppointmentNotes = async (req, res) => {
   const { appointmentId } = req.params;
   const { notes } = req.body;
-  const userId = req.user.userId;
+  const userId = req.user.id;
 
   try {
     const appointment = await Appointment.findByPk(appointmentId);
@@ -155,7 +155,7 @@ const updateAppointment = async (req, res) => {
       return res.status(404).json({ message: 'Cita no encontrada' });
     }
     // Permitir solo a admin, super admin, o dueño modificar
-    if (!['Administrador', 'Super Admin'].includes(req.user.role) && req.user.userId !== appointment.patient_id && req.user.userId !== appointment.specialist_id) {
+    if (!['Administrador', 'Super Admin'].includes(req.user.role) && req.user.id !== appointment.patient_id && req.user.id !== appointment.specialist_id) {
       return res.status(403).json({ message: 'Acceso denegado' });
     }
     if (date) appointment.date = date;
@@ -181,7 +181,7 @@ const deleteAppointment = async (req, res) => {
       return res.status(404).json({ message: 'Cita no encontrada' });
     }
     // Permitir solo a admin, super admin, o dueño eliminar
-    if (!['Administrador', 'Super Admin'].includes(req.user.role) && req.user.userId !== appointment.patient_id && req.user.userId !== appointment.specialist_id) {
+    if (!['Administrador', 'Super Admin'].includes(req.user.role) && req.user.id !== appointment.patient_id && req.user.id !== appointment.specialist_id) {
       return res.status(403).json({ message: 'Acceso denegado' });
     }
     await appointment.destroy();
