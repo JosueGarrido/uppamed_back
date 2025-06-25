@@ -26,10 +26,10 @@ app.use((req, res, next) => {
 });
 
 // CORS: Permitir solo el origen local y credenciales para desarrollo
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
-}));
+// app.use(cors({
+//   origin: 'http://localhost:3000',
+//   credentials: true
+// }));
 
 // Middleware para parsear JSON
 app.use(express.json());
