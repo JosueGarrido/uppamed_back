@@ -15,9 +15,17 @@ const medicalExamRoutes = require('../routes/medicalExamRoutes');
 dotenv.config();
 const app = express();
 
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://uppamed.vercel.app', // Cambia esto por tu dominio real si es diferente
+];
+
 // Middleware para forzar headers de CORS en todas las rutas (Vercel serverless)
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
