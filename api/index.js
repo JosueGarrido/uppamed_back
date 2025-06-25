@@ -23,8 +23,12 @@ const allowedOrigins = [
 // Middleware para forzar headers de CORS en todas las rutas (Vercel serverless)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  console.log('[CORS] Origin recibido:', origin);
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
+    console.log('[CORS] Origin permitido:', origin);
+  } else {
+    console.log('[CORS] Origin NO permitido:', origin);
   }
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
