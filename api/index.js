@@ -17,7 +17,7 @@ const app = express();
 
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://uppamed.uppacloud.com/', // Cambia esto por tu dominio real si es diferente
+  'https://uppamed.uppacloud.com', // Sin barra final
 ];
 
 // Middleware para forzar headers de CORS en todas las rutas (Vercel serverless)
