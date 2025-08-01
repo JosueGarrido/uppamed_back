@@ -11,6 +11,9 @@ router.post('/:tenantId/appointments', authenticate, checkRole(['Paciente', 'Adm
 // Ver las citas (paciente ve sus citas, especialista ve sus citas asignadas)
 router.get('/', authenticate, getAppointmentsForUser);
 
+// Ruta específica para pacientes
+router.get('/patient', authenticate, checkRole('Paciente'), getAppointmentsForUser);
+
 // Modificar notas de la cita (solo especialista puede hacerlo)
 router.put('/:appointmentId/notes', authenticate, checkRole('Especialista'), updateAppointmentNotes);
 
