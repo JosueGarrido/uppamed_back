@@ -44,7 +44,7 @@ app.use('/medicalRecord', medicalRecordRoutes);
 app.use('/medicalExam', medicalExamRoutes);
 
 // Iniciar el servidor
-const PORT = process.env.PORT || 3000;  // Usa el puerto desde las variables de entorno o 3000 por defecto
+const PORT = process.env.PORT || 3001;  // Usa el puerto desde las variables de entorno o 3001 por defecto
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
   sequelize.sync() // Sincroniza la base de datos

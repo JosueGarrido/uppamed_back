@@ -64,7 +64,7 @@ const getAppointmentsForUser = async (req, res) => {
       appointments = await Appointment.findAll({
         where: { specialist_id: userId, tenant_id: tenantId },
         include: [
-          { model: User, as: 'patient', attributes: ['id', 'username', 'email', 'identification_number'] }
+          { model: User, as: 'appointmentPatient', attributes: ['id', 'username', 'email', 'identification_number'] }
         ]
       });
     } else {
@@ -117,8 +117,8 @@ const getAppointmentsForTenant = async (req, res) => {
       where: { tenant_id: tenantId },
       order: [['date', 'DESC']],
       include: [
-        { model: User, as: 'specialist', attributes: ['id', 'username', 'email', 'specialty'] },
-        { model: User, as: 'patient', attributes: ['id', 'username', 'email', 'identification_number'] }
+        { model: User, as: 'appointmentSpecialist', attributes: ['id', 'username', 'email', 'specialty'] },
+        { model: User, as: 'appointmentPatient', attributes: ['id', 'username', 'email', 'identification_number'] }
       ]
     });
     res.status(200).json(appointments);
@@ -134,8 +134,8 @@ const getAppointmentById = async (req, res) => {
   try {
     const appointment = await Appointment.findByPk(appointmentId, {
       include: [
-        { model: User, as: 'specialist', attributes: ['id', 'username', 'email', 'specialty'] },
-        { model: User, as: 'patient', attributes: ['id', 'username', 'email', 'identification_number'] }
+        { model: User, as: 'appointmentSpecialist', attributes: ['id', 'username', 'email', 'specialty'] },
+        { model: User, as: 'appointmentPatient', attributes: ['id', 'username', 'email', 'identification_number'] }
       ]
     });
     if (!appointment) {

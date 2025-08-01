@@ -11,18 +11,18 @@ try {
   Tenant.hasMany(User, { foreignKey: 'tenant_id', as: 'users' });
 
   // Asociaciones para citas
-  Appointment.belongsTo(User, { as: 'specialist', foreignKey: 'specialist_id' });
-  Appointment.belongsTo(User, { as: 'patient', foreignKey: 'patient_id' });
+  Appointment.belongsTo(User, { as: 'appointmentSpecialist', foreignKey: 'specialist_id' });
+  Appointment.belongsTo(User, { as: 'appointmentPatient', foreignKey: 'patient_id' });
   Appointment.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
 
   // Asociaciones para registros médicos
-  MedicalRecord.belongsTo(User, { foreignKey: 'patient_id', as: 'patient' });
-  MedicalRecord.belongsTo(User, { foreignKey: 'specialist_id', as: 'specialist' });
+  MedicalRecord.belongsTo(User, { foreignKey: 'patient_id', as: 'recordPatient' });
+  MedicalRecord.belongsTo(User, { foreignKey: 'specialist_id', as: 'recordSpecialist' });
   MedicalRecord.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
 
   // Asociaciones para exámenes médicos
-  MedicalExam.belongsTo(User, { foreignKey: 'patient_id', as: 'patient' });
-  MedicalExam.belongsTo(User, { foreignKey: 'specialist_id', as: 'specialist' });
+  MedicalExam.belongsTo(User, { foreignKey: 'patient_id', as: 'examPatient' });
+  MedicalExam.belongsTo(User, { foreignKey: 'specialist_id', as: 'examSpecialist' });
   MedicalExam.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
 
   console.log('✅ Asociaciones de modelos configuradas correctamente');

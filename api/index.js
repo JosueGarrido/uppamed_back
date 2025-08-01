@@ -89,3 +89,11 @@ app.use((err, req, res, next) => {
 // Exportar para Vercel
 module.exports = app;
 module.exports.handler = serverless(app);
+
+// Iniciar servidor local si no estamos en Vercel
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+  });
+}
