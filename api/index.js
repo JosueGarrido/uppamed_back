@@ -5,6 +5,9 @@ const dotenv = require('dotenv');
 const sequelize = require('../config/db');
 const cors = require('cors');
 
+// Importar modelos y asociaciones
+require('../models/index');
+
 const authRoutes = require('../routes/authRoutes');
 const tenantRoutes = require('../routes/tenantRoutes');
 const appointmentRoutes = require('../routes/appointmentRoutes');

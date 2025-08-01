@@ -1,12 +1,8 @@
 // init.js
 const sequelize = require('./config/db');
 
-// importa tus modelos
-require('./models/user');
-require('./models/tenant');
-require('./models/medicalRecord');
-require('./models/medicalExam');
-require('./models/appointment');
+// importa tus modelos y asociaciones
+require('./models/index');
 
 async function initDB() {
   try {

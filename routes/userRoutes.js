@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, listUsersByTenant, getUserById, updateUser, deleteUser } = require('../controllers/userController');
+const { registerUser, listUsersByTenant, getUserById, updateUser, deleteUser, getAllUsers } = require('../controllers/userController');
 const authenticate = require('../middlewares/auth');
 const checkRole = require('../middlewares/checkRole');
 
@@ -13,6 +13,9 @@ router.post('/:tenantId/pacientes', authenticate, checkRole(['Especialista', 'Ad
 
 // Opción libre (no protegida, solo útil para testing si la dejas)
 router.post('/', registerUser);
+
+// Obtener todos los usuarios del sistema (solo Super Admin)
+router.get('/all', authenticate, checkRole('Super Admin'), getAllUsers);
 
 // Listar usuarios de un tenant
 router.get('/:tenantId/users', authenticate, checkRole(['Super Admin', 'Administrador']), listUsersByTenant);

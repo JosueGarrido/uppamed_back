@@ -165,4 +165,25 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, listUsersByTenant, getUserById, updateUser, deleteUser };
+// Obtener todos los usuarios del sistema (solo Super Admin)
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: Tenant,
+          as: 'tenant',
+          attributes: ['id', 'name']
+        }
+      ]
+    });
+    res.status(200).json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener todos los usuarios' });
+  }
+};
+
+module.exports = { registerUser, listUsersByTenant, getUserById, updateUser, deleteUser, getAllUsers };
