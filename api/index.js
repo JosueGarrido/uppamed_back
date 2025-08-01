@@ -9,15 +9,8 @@ const app = express();
 // Middleware básico
 app.use(express.json());
 
-// Configuración de CORS básica con logs
+// Configuración de CORS
 app.use((req, res, next) => {
-  console.log('🌐 CORS Request:', {
-    method: req.method,
-    path: req.path,
-    origin: req.headers.origin,
-    userAgent: req.headers['user-agent']
-  });
-
   const origin = req.headers.origin;
   const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'https://uppamed.uppacloud.com', 'https://uppamed.vercel.app'];
   
@@ -36,7 +29,6 @@ app.use((req, res, next) => {
   }
   
   if (req.method === 'OPTIONS') {
-    console.log('✅ Preflight request manejado');
     res.status(200).end();
     return;
   }
@@ -45,7 +37,6 @@ app.use((req, res, next) => {
 
 // Ruta de prueba simple
 app.get('/health', (req, res) => {
-  console.log('🏥 Health check request');
   res.json({ status: 'ok', message: 'API funcionando' });
 });
 
@@ -54,23 +45,21 @@ app.get('/', (req, res) => {
   res.json({ message: 'UppaMed API v1.0.0' });
 });
 
-// Agregar rutas de autenticación gradualmente
+// Agregar rutas de autenticación
 try {
   const authRoutes = require('../routes/authRoutes');
   app.use('/auth', authRoutes);
-  console.log('✅ Rutas de autenticación cargadas');
 } catch (error) {
-  console.error('❌ Error cargando rutas de autenticación:', error);
+  console.error('Error cargando rutas de autenticación:', error);
   // Ruta de fallback para login
   app.post('/auth/login', (req, res) => {
-    console.log('🔐 Login fallback:', req.body);
     res.status(500).json({ message: 'Servicio de autenticación temporalmente no disponible' });
   });
 }
 
-// Manejo de errores básico
+// Manejo de errores
 app.use((err, req, res, next) => {
-  console.error('❌ Error en el servidor:', err);
+  console.error('Error en el servidor:', err);
   res.status(500).json({ message: 'Error interno del servidor' });
 });
 
