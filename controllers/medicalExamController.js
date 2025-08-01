@@ -6,7 +6,7 @@ const Appointment = require('../models/appointment');
 // Crear examen médico (solo Especialista)
 const createMedicalExam = async (req, res) => {
   const { patient_id, type, results } = req.body;
-  const specialist_id = req.user.userId;
+  const specialist_id = req.user.id;
   const tenant_id = req.user.tenant_id;
 
   const patient = await User.findByPk(patient_id);
@@ -43,7 +43,7 @@ const createMedicalExam = async (req, res) => {
 
 // Obtener exámenes médicos del usuario (paciente o especialista)
 const getMedicalExamsForUser = async (req, res) => {
-  const userId = req.user.userId;
+  const userId = req.user.id;
   const tenantId = req.user.tenant_id;
 
   try {
