@@ -2,40 +2,20 @@
 const express = require('express');
 const serverless = require('serverless-http');
 const dotenv = require('dotenv');
-const sequelize = require('../config/db');
-const cors = require('cors');
-
-// Importar modelos y asociaciones
-require('../models/index');
-
-const authRoutes = require('../routes/authRoutes');
-const tenantRoutes = require('../routes/tenantRoutes');
-const appointmentRoutes = require('../routes/appointmentRoutes');
-const userRoutes = require('../routes/userRoutes');
-const medicalRecordRoutes = require('../routes/medicalRecordRoutes');
-const medicalExamRoutes = require('../routes/medicalExamRoutes');
 
 dotenv.config();
 const app = express();
 
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://uppamed.uppacloud.com', // Sin barra final
-];
+// Middleware básico
+app.use(express.json());
 
-// Middleware para forzar headers de CORS en todas las rutas (Vercel serverless)
+// Configuración de CORS básica
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  console.log('[CORS] Origin recibido:', origin);
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    console.log('[CORS] Origin permitido:', origin);
-  } else {
-    console.log('[CORS] Origin NO permitido:', origin);
-  }
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -43,41 +23,22 @@ app.use((req, res, next) => {
   next();
 });
 
-// Configuración de CORS completamente abierta
-//app.use(cors());
-
-// Middleware para parsear JSON
-app.use(express.json());
-
-// Rutas
-app.use('/auth', authRoutes);
-app.use('/tenants', tenantRoutes);
-app.use('/appointments', appointmentRoutes);
-app.use('/users', userRoutes);
-app.use('/medical-records', medicalRecordRoutes);
-app.use('/medical-exams', medicalExamRoutes);
-
-// Ruta de health check
+// Ruta de prueba simple
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', message: 'API funcionando' });
 });
 
 // Ruta por defecto
 app.get('/', (req, res) => {
-  res.json({ message: 'UppaMed API' });
+  res.json({ message: 'UppaMed API v1.0.0' });
 });
 
-// Conectar base de datos en cada ejecución
-sequelize.sync()
-  .then(() => console.log('📦 Base de datos sincronizada en Vercel'))
-  .catch((err) => console.error('❌  Error conectando con DB en Vercel', err));
-
-// Manejo de errores
+// Manejo de errores básico
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error:', err);
   res.status(500).json({ message: 'Error interno del servidor' });
 });
 
-// Exportar como handler para Vercel
+// Exportar para Vercel
 module.exports = app;
 module.exports.handler = serverless(app);
