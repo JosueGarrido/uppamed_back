@@ -33,6 +33,19 @@ app.get('/', (req, res) => {
   res.json({ message: 'UppaMed API v1.0.0' });
 });
 
+// Agregar rutas de autenticación gradualmente
+try {
+  const authRoutes = require('../routes/authRoutes');
+  app.use('/auth', authRoutes);
+  console.log('✅ Rutas de autenticación cargadas');
+} catch (error) {
+  console.error('❌ Error cargando rutas de autenticación:', error);
+  // Ruta de fallback para login
+  app.post('/auth/login', (req, res) => {
+    res.status(500).json({ message: 'Servicio de autenticación temporalmente no disponible' });
+  });
+}
+
 // Manejo de errores básico
 app.use((err, req, res, next) => {
   console.error('Error:', err);
