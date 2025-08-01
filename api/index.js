@@ -80,46 +80,6 @@ try {
   });
 }
 
-// Ruta temporal para crear usuario de prueba
-app.post('/auth/register-test', async (req, res) => {
-  try {
-    const { username, email, password, role } = req.body;
-    
-    // Verificar si el usuario ya existe
-    const existingUser = await require('../models/user').findOne({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ message: 'El usuario ya existe' });
-    }
-    
-    // Hashear contraseña
-    const bcrypt = require('bcryptjs');
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // Crear usuario
-    const User = require('../models/user');
-    const user = await User.create({
-      username,
-      email,
-      password: hashedPassword,
-      role: role || 'Super Admin',
-      identification_number: Math.floor(1000000000 + Math.random() * 9000000000).toString()
-    });
-    
-    res.status(201).json({ 
-      message: 'Usuario creado exitosamente',
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    console.error('Error creando usuario de prueba:', error);
-    res.status(500).json({ message: 'Error creando usuario' });
-  }
-});
-
 // Manejo de errores
 app.use((err, req, res, next) => {
   console.error('Error en el servidor:', err);
