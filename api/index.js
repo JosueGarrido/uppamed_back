@@ -45,13 +45,36 @@ app.get('/', (req, res) => {
   res.json({ message: 'UppaMed API v1.0.0' });
 });
 
-// Agregar rutas de autenticación
+// Agregar todas las rutas necesarias
 try {
   const authRoutes = require('../routes/authRoutes');
+  const tenantRoutes = require('../routes/tenantRoutes');
+  const appointmentRoutes = require('../routes/appointmentRoutes');
+  const userRoutes = require('../routes/userRoutes');
+  const medicalRecordRoutes = require('../routes/medicalRecordRoutes');
+  const medicalExamRoutes = require('../routes/medicalExamRoutes');
+
+  // Rutas
   app.use('/auth', authRoutes);
+  app.use('/tenants', tenantRoutes);
+  app.use('/appointments', appointmentRoutes);
+  app.use('/users', userRoutes);
+  app.use('/medical-records', medicalRecordRoutes);
+  app.use('/medical-exams', medicalExamRoutes);
+
+  console.log('✅ Todas las rutas cargadas correctamente');
 } catch (error) {
-  console.error('Error cargando rutas de autenticación:', error);
-  // Ruta de fallback para login
+  console.error('❌ Error cargando rutas:', error);
+  
+  // Rutas de fallback para evitar errores 404
+  app.get('/tenants', (req, res) => {
+    res.status(500).json({ message: 'Servicio de tenants temporalmente no disponible' });
+  });
+  
+  app.get('/users/all', (req, res) => {
+    res.status(500).json({ message: 'Servicio de usuarios temporalmente no disponible' });
+  });
+  
   app.post('/auth/login', (req, res) => {
     res.status(500).json({ message: 'Servicio de autenticación temporalmente no disponible' });
   });
