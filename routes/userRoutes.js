@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, listUsersByTenant, getUserById, updateUser, deleteUser, getAllUsers } = require('../controllers/userController');
+const { registerUser, createGlobalUser, listUsersByTenant, getUserById, updateUser, deleteUser, getAllUsers } = require('../controllers/userController');
 const authenticate = require('../middlewares/auth');
 const checkRole = require('../middlewares/checkRole');
 
@@ -11,8 +11,8 @@ router.post('/:tenantId/users', authenticate, checkRole(['Super Admin', 'Adminis
 // Ruta alternativa: Especialistas también pueden crear Pacientes
 router.post('/:tenantId/pacientes', authenticate, checkRole(['Especialista', 'Administrador', 'Super Admin']), registerUser);
 
-// Opción libre (no protegida, solo útil para testing si la dejas)
-router.post('/', registerUser);
+// Crear Super Admin (usuario global sin tenant)
+router.post('/', authenticate, checkRole('Super Admin'), createGlobalUser);
 
 // Obtener todos los usuarios del sistema (solo Super Admin)
 router.get('/all', authenticate, checkRole('Super Admin'), getAllUsers);

@@ -186,4 +186,66 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, listUsersByTenant, getUserById, updateUser, deleteUser, getAllUsers };
+// Crear usuario global (Super Admin) sin tenant
+const createGlobalUser = async (req, res) => {
+  const { username, password, role, email, identification_number, area, specialty } = req.body;
+
+  try {
+    // Solo permitir crear Super Admin en este endpoint
+    if (role !== 'Super Admin') {
+      return res.status(400).json({ message: 'Este endpoint solo permite crear usuarios Super Admin' });
+    }
+
+    // Solo Super Admin puede crear otros Super Admin
+    if (req.user.role !== 'Super Admin') {
+      return res.status(403).json({ message: 'Solo el Super Admin puede crear otros Super Admin' });
+    }
+
+    // Validar email
+    if (!email) {
+      return res.status(400).json({ message: 'El email es obligatorio' });
+    }
+
+    // Verificar si el username o email ya existe
+    const existingUser = await User.findOne({ where: { username } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'El nombre de usuario ya está en uso' });
+    }
+    const existingEmail = await User.findOne({ where: { email } });
+    if (existingEmail) {
+      return res.status(400).json({ message: 'El email ya está en uso' });
+    }
+
+    // Hashear contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Crear usuario Super Admin sin tenant
+    const user = await User.create({
+      username,
+      email,
+      password: hashedPassword,
+      role,
+      identification_number: identification_number || generarIdentificacion(),
+      tenant_id: null, // Super Admin no tiene tenant
+      area: null,
+      specialty: null,
+    });
+
+    res.status(201).json({
+      message: 'Super Admin creado exitosamente',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        identification_number: user.identification_number,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al crear el Super Admin' });
+  }
+};
+
+module.exports = { registerUser, createGlobalUser, listUsersByTenant, getUserById, updateUser, deleteUser, getAllUsers };
