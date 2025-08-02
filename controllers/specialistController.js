@@ -60,12 +60,21 @@ const getSpecialistSchedule = async (req, res) => {
 const updateSpecialistSchedule = async (req, res) => {
   const { specialistId } = req.params;
   const { tenantId } = req.params;
-  const schedules = req.body; // Ahora recibe directamente el array
+  let schedules = req.body; // Recibe el body completo
 
   console.log('=== UPDATE SPECIALIST SCHEDULE ===');
   console.log('specialistId:', specialistId);
   console.log('tenantId:', tenantId);
-  console.log('schedules received:', JSON.stringify(schedules, null, 2));
+  console.log('req.body received:', JSON.stringify(req.body, null, 2));
+
+  // Manejar tanto formato de objeto como array directo
+  if (req.body && req.body.schedules) {
+    schedules = req.body.schedules;
+    console.log('Extracted schedules from object:', JSON.stringify(schedules, null, 2));
+  } else {
+    schedules = req.body;
+    console.log('Using direct schedules array:', JSON.stringify(schedules, null, 2));
+  }
 
   try {
     // Verificar permisos (solo admin o super admin)
