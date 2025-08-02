@@ -60,7 +60,12 @@ const getSpecialistSchedule = async (req, res) => {
 const updateSpecialistSchedule = async (req, res) => {
   const { specialistId } = req.params;
   const { tenantId } = req.params;
-  const { schedules } = req.body;
+  const schedules = req.body; // Ahora recibe directamente el array
+
+  console.log('=== UPDATE SPECIALIST SCHEDULE ===');
+  console.log('specialistId:', specialistId);
+  console.log('tenantId:', tenantId);
+  console.log('schedules received:', JSON.stringify(schedules, null, 2));
 
   try {
     // Verificar permisos (solo admin o super admin)
@@ -81,28 +86,37 @@ const updateSpecialistSchedule = async (req, res) => {
       return res.status(404).json({ message: 'Especialista no encontrado' });
     }
 
+    console.log('Specialist found:', specialist.username);
+
     // Eliminar horarios existentes
-    await SpecialistSchedule.destroy({
+    const deletedCount = await SpecialistSchedule.destroy({
       where: {
         specialist_id: specialistId,
         tenant_id: tenantId
       }
     });
 
+    console.log('Deleted existing schedules:', deletedCount);
+
     // Crear nuevos horarios
     if (schedules && schedules.length > 0) {
-      await SpecialistSchedule.bulkCreate(
-        schedules.map(schedule => ({
-          ...schedule,
-          specialist_id: specialistId,
-          tenant_id: tenantId
-        }))
-      );
+      const schedulesToCreate = schedules.map(schedule => ({
+        ...schedule,
+        specialist_id: specialistId,
+        tenant_id: tenantId
+      }));
+
+      console.log('Schedules to create:', JSON.stringify(schedulesToCreate, null, 2));
+
+      const createdSchedules = await SpecialistSchedule.bulkCreate(schedulesToCreate);
+      console.log('Created schedules count:', createdSchedules.length);
+    } else {
+      console.log('No schedules to create');
     }
 
     res.status(200).json({ message: 'Horarios actualizados correctamente' });
   } catch (error) {
-    console.error(error);
+    console.error('Error in updateSpecialistSchedule:', error);
     res.status(500).json({ message: 'Error al actualizar horarios' });
   }
 };
