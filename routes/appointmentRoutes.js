@@ -21,8 +21,8 @@ router.put('/:appointmentId/notes', authenticate, checkRole('Especialista'), upd
 router.get('/:tenantId/all', authenticate, checkRole(['Administrador', 'Super Admin']), getAppointmentsForTenant);
 
 // CRUD de cita por ID
-router.get('/appointments/:appointmentId', authenticate, getAppointmentById);
-router.put('/appointments/:appointmentId', authenticate, updateAppointment);
-router.delete('/appointments/:appointmentId', authenticate, deleteAppointment);
+router.get('/:appointmentId', authenticate, getAppointmentById);
+router.put('/:appointmentId', authenticate, updateAppointment);
+router.delete('/:appointmentId', authenticate, deleteAppointment);
 
 module.exports = router;
