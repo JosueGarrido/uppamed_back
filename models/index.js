@@ -3,6 +3,8 @@ const Tenant = require('./tenant');
 const Appointment = require('./appointment');
 const MedicalRecord = require('./medicalRecord');
 const MedicalExam = require('./medicalExam');
+const SpecialistSchedule = require('./specialistSchedule');
+const SpecialistBreak = require('./specialistBreak');
 
 // Asociaciones básicas
 try {
@@ -25,6 +27,16 @@ try {
   MedicalExam.belongsTo(User, { foreignKey: 'specialist_id', as: 'examSpecialist' });
   MedicalExam.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
 
+  // Asociaciones para horarios de especialistas
+  SpecialistSchedule.belongsTo(User, { foreignKey: 'specialist_id', as: 'specialist' });
+  SpecialistSchedule.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
+  User.hasMany(SpecialistSchedule, { foreignKey: 'specialist_id', as: 'schedules' });
+
+  // Asociaciones para breaks de especialistas
+  SpecialistBreak.belongsTo(User, { foreignKey: 'specialist_id', as: 'specialist' });
+  SpecialistBreak.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
+  User.hasMany(SpecialistBreak, { foreignKey: 'specialist_id', as: 'breaks' });
+
   console.log('✅ Asociaciones de modelos configuradas correctamente');
 } catch (error) {
   console.error('❌ Error configurando asociaciones:', error);
@@ -35,5 +47,7 @@ module.exports = {
   Tenant,
   Appointment,
   MedicalRecord,
-  MedicalExam
+  MedicalExam,
+  SpecialistSchedule,
+  SpecialistBreak
 }; 

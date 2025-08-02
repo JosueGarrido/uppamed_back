@@ -55,6 +55,7 @@ try {
   const userRoutes = require('../routes/userRoutes');
   const medicalRecordRoutes = require('../routes/medicalRecordRoutes');
   const medicalExamRoutes = require('../routes/medicalExamRoutes');
+  const specialistRoutes = require('../routes/specialistRoutes');
 
   // Rutas
   app.use('/auth', authRoutes);
@@ -63,6 +64,7 @@ try {
   app.use('/users', userRoutes);
   app.use('/medical-records', medicalRecordRoutes);
   app.use('/medical-exams', medicalExamRoutes);
+  app.use('/specialists', specialistRoutes);
 
   console.log('✅ Todas las rutas cargadas correctamente');
 } catch (error) {

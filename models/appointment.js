@@ -36,7 +36,7 @@ const Appointment = sequelize.define('Appointment', {
 });
 
 // Asociaciones para incluir datos de usuario en las citas
-Appointment.belongsTo(User, { as: 'specialist', foreignKey: 'specialist_id' });
-Appointment.belongsTo(User, { as: 'patient', foreignKey: 'patient_id' });
+Appointment.belongsTo(User, { as: 'appointmentSpecialist', foreignKey: 'specialist_id' });
+Appointment.belongsTo(User, { as: 'appointmentPatient', foreignKey: 'patient_id' });
 
 module.exports = Appointment;
