@@ -28,12 +28,12 @@ try {
   MedicalExam.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
 
   // Asociaciones para horarios de especialistas
-  SpecialistSchedule.belongsTo(User, { foreignKey: 'specialist_id', as: 'specialist' });
+  SpecialistSchedule.belongsTo(User, { foreignKey: 'specialist_id', as: 'scheduleSpecialist' });
   SpecialistSchedule.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
   User.hasMany(SpecialistSchedule, { foreignKey: 'specialist_id', as: 'schedules' });
 
   // Asociaciones para breaks de especialistas
-  SpecialistBreak.belongsTo(User, { foreignKey: 'specialist_id', as: 'specialist' });
+  SpecialistBreak.belongsTo(User, { foreignKey: 'specialist_id', as: 'breakSpecialist' });
   SpecialistBreak.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
   User.hasMany(SpecialistBreak, { foreignKey: 'specialist_id', as: 'breaks' });
 

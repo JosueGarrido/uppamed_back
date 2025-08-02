@@ -1,7 +1,6 @@
 // models/specialistSchedule.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
-const User = require('./user');
 
 const SpecialistSchedule = sequelize.define('SpecialistSchedule', {
   id: {
@@ -13,7 +12,7 @@ const SpecialistSchedule = sequelize.define('SpecialistSchedule', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Users',
+      model: 'users',
       key: 'id'
     }
   },
@@ -43,8 +42,5 @@ const SpecialistSchedule = sequelize.define('SpecialistSchedule', {
     allowNull: false,
   }
 });
-
-// Asociación con el especialista
-SpecialistSchedule.belongsTo(User, { foreignKey: 'specialist_id', as: 'specialist' });
 
 module.exports = SpecialistSchedule; 

@@ -247,9 +247,9 @@ const getAvailableSlots = async (req, res) => {
       const timeString = currentTime.toTimeString().slice(0, 5);
       
       // Verificar si no hay break en esta hora
-      const hasBreak = breaks.some(break => {
-        const breakStart = new Date(`2000-01-01T${break.start_time}`);
-        const breakEnd = new Date(`2000-01-01T${break.end_time}`);
+      const hasBreak = breaks.some(breakItem => {
+        const breakStart = new Date(`2000-01-01T${breakItem.start_time}`);
+        const breakEnd = new Date(`2000-01-01T${breakItem.end_time}`);
         return currentTime >= breakStart && currentTime < breakEnd;
       });
 

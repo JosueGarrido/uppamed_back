@@ -1,7 +1,6 @@
 // models/specialistBreak.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
-const User = require('./user');
 
 const SpecialistBreak = sequelize.define('SpecialistBreak', {
   id: {
@@ -13,7 +12,7 @@ const SpecialistBreak = sequelize.define('SpecialistBreak', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Users',
+      model: 'users',
       key: 'id'
     }
   },
@@ -43,8 +42,5 @@ const SpecialistBreak = sequelize.define('SpecialistBreak', {
     allowNull: false,
   }
 });
-
-// Asociación con el especialista
-SpecialistBreak.belongsTo(User, { foreignKey: 'specialist_id', as: 'specialist' });
 
 module.exports = SpecialistBreak; 

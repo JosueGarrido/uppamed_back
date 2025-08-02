@@ -6,6 +6,7 @@ const appointmentRoutes = require('./routes/appointmentRoutes');
 const userRoutes = require('./routes/userRoutes');
 const medicalRecordRoutes = require('./routes/medicalRecordRoutes');
 const medicalExamRoutes = require('./routes/medicalExamRoutes');
+const specialistRoutes = require('./routes/specialistRoutes');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
@@ -51,6 +52,7 @@ app.use('/appointments', appointmentRoutes);
 app.use('/users', userRoutes);
 app.use('/medicalRecord', medicalRecordRoutes);
 app.use('/medicalExam', medicalExamRoutes);
+app.use('/specialists', specialistRoutes);
 
 // Iniciar el servidor
 const PORT = process.env.PORT || 3001;  // Usa el puerto desde las variables de entorno o 3001 por defecto
