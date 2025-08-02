@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate, checkRole } = require('../middlewares/auth');
+const authenticate = require('../middlewares/auth');
+const checkRole = require('../middlewares/checkRole');
 const {
   getSpecialistSchedule,
   updateSpecialistSchedule,
@@ -8,20 +9,7 @@ const {
   getAvailableSlots
 } = require('../controllers/specialistController');
 
-// Rutas para administradores y super admins
-// Obtener horarios de un especialista
-router.get('/:tenantId/specialists/:specialistId/schedule', authenticate, getSpecialistSchedule);
-
-// Actualizar horarios de un especialista (solo admin o super admin)
-router.put('/:tenantId/specialists/:specialistId/schedule', authenticate, checkRole(['Administrador', 'Super Admin']), updateSpecialistSchedule);
-
-// Verificar disponibilidad de un especialista
-router.get('/:tenantId/specialists/:specialistId/availability', authenticate, checkSpecialistAvailability);
-
-// Obtener slots disponibles de un especialista para una fecha
-router.get('/:tenantId/specialists/:specialistId/available-slots', authenticate, getAvailableSlots);
-
-// Rutas para especialistas (auto-gestión)
+// Rutas para especialistas (auto-gestión) - DEBEN IR PRIMERO
 // Obtener mi propio horario
 router.get('/my-schedule', authenticate, checkRole('Especialista'), async (req, res) => {
   try {
@@ -63,5 +51,18 @@ router.put('/my-schedule', authenticate, checkRole('Especialista'), async (req, 
     res.status(500).json({ message: 'Error al actualizar mi horario' });
   }
 });
+
+// Rutas para administradores y super admins - VAN DESPUÉS
+// Obtener horarios de un especialista
+router.get('/:tenantId/specialists/:specialistId/schedule', authenticate, getSpecialistSchedule);
+
+// Actualizar horarios de un especialista (solo admin o super admin)
+router.put('/:tenantId/specialists/:specialistId/schedule', authenticate, checkRole(['Administrador', 'Super Admin']), updateSpecialistSchedule);
+
+// Verificar disponibilidad de un especialista
+router.get('/:tenantId/specialists/:specialistId/availability', authenticate, checkSpecialistAvailability);
+
+// Obtener slots disponibles de un especialista para una fecha
+router.get('/:tenantId/specialists/:specialistId/available-slots', authenticate, getAvailableSlots);
 
 module.exports = router; 

@@ -7,7 +7,8 @@ dotenv.config();
 const app = express();
 
 // Middleware básico
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Configuración de CORS para desarrollo y producción
 const allowedOrigins = [
@@ -39,55 +40,115 @@ app.use((req, res, next) => {
 
 // Ruta de prueba simple
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'API funcionando' });
+  res.json({ status: 'ok', message: 'API funcionando', timestamp: new Date().toISOString() });
 });
 
 // Ruta por defecto
 app.get('/', (req, res) => {
-  res.json({ message: 'UppaMed API v1.0.0' });
+  res.json({ message: 'UppaMed API v1.0.0', status: 'running' });
 });
 
-// Agregar todas las rutas necesarias
+// Cargar rutas de forma segura
+console.log('🔄 Iniciando carga de rutas...');
+
 try {
+  // Cargar rutas una por una con manejo de errores individual
   const authRoutes = require('../routes/authRoutes');
-  const tenantRoutes = require('../routes/tenantRoutes');
-  const appointmentRoutes = require('../routes/appointmentRoutes');
-  const userRoutes = require('../routes/userRoutes');
-  const medicalRecordRoutes = require('../routes/medicalRecordRoutes');
-  const medicalExamRoutes = require('../routes/medicalExamRoutes');
-  const specialistRoutes = require('../routes/specialistRoutes');
-
-  // Rutas
   app.use('/auth', authRoutes);
-  app.use('/tenants', tenantRoutes);
-  app.use('/appointments', appointmentRoutes);
-  app.use('/users', userRoutes);
-  app.use('/medical-records', medicalRecordRoutes);
-  app.use('/medical-exams', medicalExamRoutes);
-  app.use('/specialists', specialistRoutes);
-
-  console.log('✅ Todas las rutas cargadas correctamente');
+  console.log('✅ Ruta /auth cargada');
 } catch (error) {
-  console.error('❌ Error cargando rutas:', error);
-  
-  // Rutas de fallback para evitar errores 404
-  app.get('/tenants', (req, res) => {
-    res.status(500).json({ message: 'Servicio de tenants temporalmente no disponible' });
-  });
-  
-  app.get('/users/all', (req, res) => {
-    res.status(500).json({ message: 'Servicio de usuarios temporalmente no disponible' });
-  });
-  
-  app.post('/auth/login', (req, res) => {
-    res.status(500).json({ message: 'Servicio de autenticación temporalmente no disponible' });
-  });
+  console.error('❌ Error cargando /auth:', error.message);
 }
 
-// Manejo de errores
+try {
+  const tenantRoutes = require('../routes/tenantRoutes');
+  app.use('/tenants', tenantRoutes);
+  console.log('✅ Ruta /tenants cargada');
+} catch (error) {
+  console.error('❌ Error cargando /tenants:', error.message);
+}
+
+try {
+  const appointmentRoutes = require('../routes/appointmentRoutes');
+  app.use('/appointments', appointmentRoutes);
+  console.log('✅ Ruta /appointments cargada');
+} catch (error) {
+  console.error('❌ Error cargando /appointments:', error.message);
+}
+
+try {
+  const userRoutes = require('../routes/userRoutes');
+  app.use('/users', userRoutes);
+  console.log('✅ Ruta /users cargada');
+} catch (error) {
+  console.error('❌ Error cargando /users:', error.message);
+}
+
+try {
+  const medicalRecordRoutes = require('../routes/medicalRecordRoutes');
+  app.use('/medical-records', medicalRecordRoutes);
+  console.log('✅ Ruta /medical-records cargada');
+} catch (error) {
+  console.error('❌ Error cargando /medical-records:', error.message);
+}
+
+try {
+  const medicalExamRoutes = require('../routes/medicalExamRoutes');
+  app.use('/medical-exams', medicalExamRoutes);
+  console.log('✅ Ruta /medical-exams cargada');
+} catch (error) {
+  console.error('❌ Error cargando /medical-exams:', error.message);
+}
+
+try {
+  const specialistRoutes = require('../routes/specialistRoutes');
+  app.use('/specialists', specialistRoutes);
+  console.log('✅ Ruta /specialists cargada');
+} catch (error) {
+  console.error('❌ Error cargando /specialists:', error.message);
+}
+
+console.log('📊 Carga de rutas completada');
+
+// Rutas de fallback para evitar errores 404
+app.get('/tenants', (req, res) => {
+  res.status(500).json({ message: 'Servicio de tenants temporalmente no disponible' });
+});
+
+app.get('/users/all', (req, res) => {
+  res.status(500).json({ message: 'Servicio de usuarios temporalmente no disponible' });
+});
+
+app.post('/auth/login', (req, res) => {
+  res.status(500).json({ message: 'Servicio de autenticación temporalmente no disponible' });
+});
+
+// Manejo de errores global
 app.use((err, req, res, next) => {
   console.error('Error en el servidor:', err);
-  res.status(500).json({ message: 'Error interno del servidor' });
+  
+  // Log detallado del error
+  console.error('Error details:', {
+    message: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    body: req.body
+  });
+  
+  res.status(500).json({ 
+    message: 'Error interno del servidor',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  });
+});
+
+// Manejo de rutas no encontradas
+app.use('*', (req, res) => {
+  res.status(404).json({ 
+    message: 'Ruta no encontrada',
+    path: req.originalUrl,
+    method: req.method
+  });
 });
 
 // Exportar para Vercel
@@ -98,6 +159,6 @@ module.exports.handler = serverless(app);
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3001;
   app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+    console.log(`🚀 Servidor iniciado en puerto ${PORT}`);
   });
 }
