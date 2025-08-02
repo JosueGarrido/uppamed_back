@@ -13,9 +13,19 @@ const cors = require('cors');
 dotenv.config();
 const app = express();
 
-// Middleware para forzar headers de CORS en todas las rutas
+// Configuración de CORS para desarrollo y producción
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://uppamed-front.vercel.app',
+  'https://uppamed.uppacloud.com',
+  'https://uppamed.vercel.app'
+];
+
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
@@ -24,12 +34,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-
-// CORS: Permitir solo el origen local y credenciales para desarrollo
-// app.use(cors({
-//   origin: 'http://localhost:3000',
-//   credentials: true
-// }));
 
 // Middleware para parsear JSON
 app.use(express.json());
