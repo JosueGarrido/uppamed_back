@@ -9,24 +9,26 @@ const app = express();
 // Middleware básico
 app.use(express.json());
 
-// Configuración de CORS
+// Configuración de CORS para desarrollo y producción
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://uppamed-front.vercel.app',
+  'https://uppamed-frontend.vercel.app',
+  'https://uppamed.vercel.app',
+  'https://uppamed.uppacloud.com'
+];
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'https://uppamed.uppacloud.com', 'https://uppamed.vercel.app'];
   
   if (allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
-  } else {
-    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
-  
-  // Solo establecer credentials si el origin está permitido
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();

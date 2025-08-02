@@ -1,6 +1,5 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const sequelize = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const tenantRoutes = require('./routes/tenantRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
@@ -17,6 +16,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:3000',
   'https://uppamed-front.vercel.app',
+  'https://uppamed-frontend.vercel.app',
   'https://uppamed.uppacloud.com',
   'https://uppamed.vercel.app'
 ];
@@ -39,6 +39,11 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(cookieParser());
 
+// Ruta de prueba
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'API funcionando' });
+});
+
 // Rutas
 app.use('/auth', authRoutes);
 app.use('/tenants', tenantRoutes);
@@ -51,7 +56,14 @@ app.use('/medicalExam', medicalExamRoutes);
 const PORT = process.env.PORT || 3001;  // Usa el puerto desde las variables de entorno o 3001 por defecto
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
-  sequelize.sync() // Sincroniza la base de datos
-    .then(() => console.log('Conexión con la base de datos establecida'))
-    .catch((error) => console.error('Error al conectar con la base de datos', error));
+  
+  // Solo intentar conectar a la base de datos si las variables están configuradas
+  if (process.env.DB_HOST && process.env.DB_NAME) {
+    const sequelize = require('./config/db');
+    sequelize.sync() // Sincroniza la base de datos
+      .then(() => console.log('Conexión con la base de datos establecida'))
+      .catch((error) => console.error('Error al conectar con la base de datos', error));
+  } else {
+    console.log('⚠️  Base de datos no configurada - modo de desarrollo sin BD');
+  }
 });
