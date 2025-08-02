@@ -95,15 +95,34 @@ const impersonateTenantAdmin = async (req, res) => {
 
 // Endpoint para restaurar la sesión original del Super Admin
 const restoreImpersonation = (req, res) => {
-  // Si el usuario autenticado es Super Admin, devuelve el token recibido
-  if (req.user && req.user.role === 'Super Admin' && req.headers.authorization) {
-    const originalToken = req.headers.authorization.replace('Bearer ', '');
-    // Elimina la cookie si existe (opcional)
+  try {
+    // Obtener el token original de la cookie
+    const cookies = getCookies(req);
+    const originalToken = cookies.original_token;
+
+    if (!originalToken) {
+      return res.status(400).json({ message: 'No hay sesión original para restaurar' });
+    }
+
+    // Verificar que el token original sea válido
+    try {
+      const decoded = jwt.verify(originalToken, process.env.JWT_SECRET);
+      if (decoded.role !== 'Super Admin') {
+        return res.status(403).json({ message: 'Token original no corresponde a Super Admin' });
+      }
+    } catch (jwtError) {
+      return res.status(401).json({ message: 'Token original inválido o expirado' });
+    }
+
+    // Eliminar la cookie del token original
     res.clearCookie('original_token', { httpOnly: true, sameSite: 'none', secure: true });
+    
+    // Devolver el token original
     return res.json({ token: originalToken });
+  } catch (error) {
+    console.error('Error en restoreImpersonation:', error);
+    return res.status(500).json({ message: 'Error al restaurar sesión original' });
   }
-  // Si no, responde 400
-  return res.status(400).json({ message: 'No hay sesión original para restaurar' });
 };
 
 module.exports = { loginUser, impersonateTenantAdmin, restoreImpersonation };
