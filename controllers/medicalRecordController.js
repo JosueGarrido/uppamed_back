@@ -82,4 +82,93 @@ const getMedicalRecordsForSpecialist = async (req, res) => {
   }
 };
 
-module.exports = { createMedicalRecord, getMedicalRecordsForPatient, getMedicalRecordsForSpecialist };
+// Obtener un registro médico por ID
+const getMedicalRecordById = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  const tenantId = req.user.tenant_id;
+
+  try {
+    const medicalRecord = await MedicalRecord.findByPk(id);
+    
+    if (!medicalRecord) {
+      return res.status(404).json({ message: 'Registro médico no encontrado' });
+    }
+
+    // Verificar que el usuario tenga acceso al registro
+    if (req.user.role === 'Paciente') {
+      // Pacientes solo pueden ver sus propios registros
+      if (medicalRecord.patient_id !== userId) {
+        return res.status(403).json({ message: 'No tienes permisos para ver este registro' });
+      }
+    } else if (req.user.role === 'Especialista') {
+      // Especialistas solo pueden ver registros que crearon o de su tenant
+      if (medicalRecord.specialist_id !== userId && medicalRecord.tenant_id !== tenantId) {
+        return res.status(403).json({ message: 'No tienes permisos para ver este registro' });
+      }
+    }
+
+    res.status(200).json(medicalRecord);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener el registro médico' });
+  }
+};
+
+// Actualizar un registro médico
+const updateMedicalRecord = async (req, res) => {
+  const { id } = req.params;
+  const { patient_id, diagnosis, treatment, observations } = req.body;
+  const userId = req.user.id;
+  const tenantId = req.user.tenant_id;
+
+  try {
+    const medicalRecord = await MedicalRecord.findByPk(id);
+    
+    if (!medicalRecord) {
+      return res.status(404).json({ message: 'Registro médico no encontrado' });
+    }
+
+    // Verificar que el especialista sea el creador del registro
+    if (medicalRecord.specialist_id !== userId) {
+      return res.status(403).json({ message: 'Solo puedes editar registros que hayas creado' });
+    }
+
+    // Verificar que el registro pertenezca al mismo tenant
+    if (medicalRecord.tenant_id !== tenantId) {
+      return res.status(403).json({ message: 'No tienes permisos para editar este registro' });
+    }
+
+    // Verificar si el paciente existe y pertenece al mismo tenant
+    if (patient_id) {
+      const patient = await User.findByPk(patient_id);
+      if (!patient || patient.tenant_id !== tenantId) {
+        return res.status(404).json({ message: 'Paciente no encontrado o no autorizado' });
+      }
+    }
+
+    // Actualizar el registro
+    await medicalRecord.update({
+      patient_id: patient_id || medicalRecord.patient_id,
+      diagnosis,
+      treatment,
+      observations,
+    });
+
+    res.status(200).json({ 
+      message: 'Registro médico actualizado correctamente', 
+      medicalRecord: await medicalRecord.reload() 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualizar el registro médico' });
+  }
+};
+
+module.exports = { 
+  createMedicalRecord, 
+  getMedicalRecordsForPatient, 
+  getMedicalRecordsForSpecialist,
+  getMedicalRecordById,
+  updateMedicalRecord
+};

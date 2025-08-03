@@ -1,5 +1,5 @@
 const express = require('express');
-const { createMedicalRecord, getMedicalRecordsForPatient, getMedicalRecordsForSpecialist } = require('../controllers/medicalRecordController');
+const { createMedicalRecord, getMedicalRecordsForPatient, getMedicalRecordsForSpecialist, updateMedicalRecord, getMedicalRecordById } = require('../controllers/medicalRecordController');
 const authenticate = require('../middlewares/auth');
 const checkRole = require('../middlewares/checkRole');
 
@@ -18,5 +18,11 @@ router.get('/', authenticate, checkRole('Paciente'), getMedicalRecordsForPatient
 
 // Ruta para obtener los registros médicos creados por un especialista (solo especialista)
 router.get('/specialist', authenticate, checkRole('Especialista'), getMedicalRecordsForSpecialist);
+
+// Ruta para obtener un registro médico por ID
+router.get('/:id', authenticate, checkRole(['Especialista', 'Paciente']), getMedicalRecordById);
+
+// Ruta para actualizar un registro médico (solo especialista)
+router.put('/:id', authenticate, checkRole('Especialista'), updateMedicalRecord);
 
 module.exports = router;
