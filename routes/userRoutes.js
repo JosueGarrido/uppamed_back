@@ -17,8 +17,8 @@ router.post('/', authenticate, checkRole('Super Admin'), createGlobalUser);
 // Obtener todos los usuarios del sistema (solo Super Admin)
 router.get('/all', authenticate, checkRole('Super Admin'), getAllUsers);
 
-// Listar usuarios de un tenant
-router.get('/:tenantId/users', authenticate, checkRole(['Super Admin', 'Administrador']), listUsersByTenant);
+// Listar usuarios de un tenant (Super Admin, Administrador y Especialista)
+router.get('/:tenantId/users', authenticate, checkRole(['Super Admin', 'Administrador', 'Especialista']), listUsersByTenant);
 
 // Obtener usuario por ID
 router.get('/users/:id', authenticate, checkRole(['Super Admin', 'Administrador']), getUserById);
