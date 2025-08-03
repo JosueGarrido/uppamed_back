@@ -5,11 +5,10 @@ const authenticate = require('../middlewares/auth');
 const checkRole = require('../middlewares/checkRole');
 const upload = require('../middlewares/upload');
 
-
 const router = express.Router();
 
 router.post(
-  '/medical-exams',
+  '/',
   authenticate,
   checkRole('Especialista'),
   upload.array('attachments'), // acepta archivos
@@ -17,7 +16,7 @@ router.post(
 );
 
 router.get(
-  '/medical-exams',
+  '/',
   authenticate,
   getMedicalExamsForUser
 );

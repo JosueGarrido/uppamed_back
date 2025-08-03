@@ -5,7 +5,7 @@ const Appointment = require('../models/appointment');
 
 // Crear examen médico (solo Especialista)
 const createMedicalExam = async (req, res) => {
-  const { patient_id, type, results } = req.body;
+  const { patient_id, type, result } = req.body;
   const specialist_id = req.user.id;
   const tenant_id = req.user.tenant_id;
 
@@ -29,7 +29,7 @@ const createMedicalExam = async (req, res) => {
       specialist_id,
       tenant_id,
       type,
-      results,
+      results: result, // Mapear 'result' del frontend a 'results' del modelo
       attachments,
     });
 
