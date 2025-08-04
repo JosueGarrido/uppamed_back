@@ -46,8 +46,16 @@ const createAppointment = async (req, res) => {
       return res.status(404).json({ message: 'Paciente no encontrado o no válido para este tenant' });
     }
 
+    // Convertir la fecha a UTC si no tiene zona horaria
+    let utcDate = date;
+    if (date && !date.includes('Z') && !date.includes('+')) {
+      // Si la fecha no tiene zona horaria, asumir que es hora local y convertir a UTC
+      const localDate = new Date(date);
+      utcDate = new Date(localDate.getTime() + (localDate.getTimezoneOffset() * 60000)).toISOString();
+    }
+
     const appointment = await Appointment.create({
-      date,
+      date: utcDate,
       specialist_id,
       patient_id,
       tenant_id,
@@ -181,7 +189,16 @@ const updateAppointment = async (req, res) => {
     if (!['Administrador', 'Super Admin'].includes(req.user.role) && req.user.id !== appointment.patient_id && req.user.id !== appointment.specialist_id) {
       return res.status(403).json({ message: 'Acceso denegado' });
     }
-    if (date) appointment.date = date;
+    if (date) {
+      // Convertir la fecha a UTC si no tiene zona horaria
+      let utcDate = date;
+      if (date && !date.includes('Z') && !date.includes('+')) {
+        // Si la fecha no tiene zona horaria, asumir que es hora local y convertir a UTC
+        const localDate = new Date(date);
+        utcDate = new Date(localDate.getTime() + (localDate.getTimezoneOffset() * 60000)).toISOString();
+      }
+      appointment.date = utcDate;
+    }
     if (specialist_id) appointment.specialist_id = specialist_id;
     if (patient_id) appointment.patient_id = patient_id;
     if (notes !== undefined) appointment.notes = notes;
