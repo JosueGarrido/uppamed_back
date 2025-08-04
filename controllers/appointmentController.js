@@ -10,7 +10,7 @@ const createAppointment = async (req, res) => {
 
   if (req.user.role === 'Paciente') {
     patient_id = req.user?.userId;
-  } else if (['Administrador', 'Super Admin'].includes(req.user.role)) {
+  } else if (['Administrador', 'Super Admin', 'Especialista'].includes(req.user.role)) {
     patient_id = bodyPatientId;
   }
 
