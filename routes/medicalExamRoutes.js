@@ -3,6 +3,7 @@ const express = require('express');
 const { 
   createMedicalExam, 
   getMedicalExamsForUser, 
+  getMedicalExamsForAdmin,
   getMedicalExamById,
   updateMedicalExam,
   deleteMedicalExam,
@@ -29,6 +30,14 @@ router.get(
   '/',
   authenticate,
   getMedicalExamsForUser
+);
+
+// Obtener todos los exámenes médicos para administradores
+router.get(
+  '/admin',
+  authenticate,
+  checkRole('Admin'),
+  getMedicalExamsForAdmin
 );
 
 // Obtener un examen médico específico

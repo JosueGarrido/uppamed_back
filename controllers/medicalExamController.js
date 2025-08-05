@@ -417,9 +417,84 @@ const getExamsRequiringFollowup = async (req, res) => {
   }
 };
 
+// Obtener todos los exámenes médicos para administradores (todos los exámenes del tenant)
+const getMedicalExamsForAdmin = async (req, res) => {
+  const tenantId = req.user.tenant_id;
+  const { 
+    page = 1, 
+    limit = 10, 
+    status, 
+    category, 
+    type, 
+    priority,
+    startDate,
+    endDate,
+    search,
+    sortBy = 'createdAt',
+    sortOrder = 'DESC'
+  } = req.query;
+
+  try {
+    const offset = (page - 1) * limit;
+    const whereClause = { tenant_id: tenantId };
+
+    // Aplicar filtros adicionales
+    if (status) whereClause.status = status;
+    if (category) whereClause.category = category;
+    if (type) whereClause.type = type;
+    if (priority) whereClause.priority = priority;
+
+    // Filtro por fecha
+    if (startDate || endDate) {
+      whereClause.createdAt = {};
+      if (startDate) whereClause.createdAt[Op.gte] = new Date(startDate);
+      if (endDate) whereClause.createdAt[Op.lte] = new Date(endDate);
+    }
+
+    // Búsqueda por texto
+    if (search) {
+      whereClause[Op.or] = [
+        { title: { [Op.like]: `%${search}%` } },
+        { type: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } },
+        { results: { [Op.like]: `%${search}%` } },
+        { notes: { [Op.like]: `%${search}%` } }
+      ];
+    }
+
+    const { count, rows: exams } = await MedicalExam.findAndCountAll({
+      where: whereClause,
+      include: [
+        { model: User, as: 'patient', attributes: ['id', 'username', 'email', 'identification_number'] },
+        { model: User, as: 'specialist', attributes: ['id', 'username', 'email'] }
+      ],
+      order: [[sortBy, sortOrder]],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+
+    res.status(200).json({
+      exams,
+      pagination: {
+        total: count,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching medical exams for admin:', error);
+    res.status(500).json({ 
+      message: 'Error al obtener los exámenes médicos',
+      error: error.message 
+    });
+  }
+};
+
 module.exports = {
   createMedicalExam,
   getMedicalExamsForUser,
+  getMedicalExamsForAdmin,
   getMedicalExamById,
   updateMedicalExam,
   deleteMedicalExam,

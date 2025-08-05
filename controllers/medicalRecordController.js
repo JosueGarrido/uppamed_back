@@ -1,6 +1,7 @@
 const MedicalRecord = require('../models/medicalRecord');
 const User = require('../models/user');
 const Appointment = require('../models/appointment');
+const { Op } = require('sequelize');
 
 // Crear un nuevo registro médico
 const createMedicalRecord = async (req, res) => {
@@ -198,11 +199,74 @@ const deleteMedicalRecord = async (req, res) => {
   }
 };
 
-module.exports = { 
-  createMedicalRecord, 
-  getMedicalRecordsForPatient, 
+// Obtener todos los registros médicos para administradores (todos los registros del tenant)
+const getMedicalRecordsForAdmin = async (req, res) => {
+  const tenantId = req.user.tenant_id;
+  const { 
+    page = 1, 
+    limit = 10, 
+    search,
+    startDate,
+    endDate,
+    sortBy = 'createdAt',
+    sortOrder = 'DESC'
+  } = req.query;
+
+  try {
+    const offset = (page - 1) * limit;
+    const whereClause = { tenant_id: tenantId };
+
+    // Filtro por fecha
+    if (startDate || endDate) {
+      whereClause.createdAt = {};
+      if (startDate) whereClause.createdAt[Op.gte] = new Date(startDate);
+      if (endDate) whereClause.createdAt[Op.lte] = new Date(endDate);
+    }
+
+    // Búsqueda por texto
+    if (search) {
+      whereClause[Op.or] = [
+        { diagnosis: { [Op.like]: `%${search}%` } },
+        { treatment: { [Op.like]: `%${search}%` } },
+        { observations: { [Op.like]: `%${search}%` } }
+      ];
+    }
+
+    const { count, rows: medicalRecords } = await MedicalRecord.findAndCountAll({
+      where: whereClause,
+      include: [
+        { model: User, as: 'patient', attributes: ['id', 'username', 'email', 'identification_number'] },
+        { model: User, as: 'specialist', attributes: ['id', 'username', 'email'] }
+      ],
+      order: [[sortBy, sortOrder]],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+
+    res.status(200).json({
+      medicalRecords,
+      pagination: {
+        total: count,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching medical records for admin:', error);
+    res.status(500).json({ 
+      message: 'Error al obtener los registros médicos',
+      error: error.message 
+    });
+  }
+};
+
+module.exports = {
+  createMedicalRecord,
+  getMedicalRecordsForPatient,
   getMedicalRecordsForSpecialist,
-  getMedicalRecordById,
+  getMedicalRecordsForAdmin,
   updateMedicalRecord,
+  getMedicalRecordById,
   deleteMedicalRecord
 };
