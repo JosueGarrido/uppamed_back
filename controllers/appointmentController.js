@@ -1,4 +1,5 @@
-const { Appointment, User } = require('../models');
+const Appointment = require('../models/appointment');
+const User = require('../models/user');
 
 // Crear una nueva cita
 const createAppointment = async (req, res) => {
@@ -8,7 +9,7 @@ const createAppointment = async (req, res) => {
   const tenant_id = req.user?.tenant_id;
 
   if (req.user.role === 'Paciente') {
-    patient_id = req.user?.userId || req.user?.id; // Manejar ambos casos
+    patient_id = req.user?.userId;
   } else if (['Administrador', 'Super Admin', 'Especialista'].includes(req.user.role)) {
     patient_id = bodyPatientId;
   }
@@ -73,7 +74,7 @@ const createAppointment = async (req, res) => {
 // Obtener las citas del usuario (paciente o especialista)
 const getAppointmentsForUser = async (req, res) => {
   console.log('🩺 getAppointmentsForUser - req.user:', req.user);
-  const userId = req.user.userId || req.user.id; // Manejar ambos casos
+  const userId = req.user.id;
   const tenantId = req.user.tenant_id;
 
   try {
@@ -108,7 +109,7 @@ const getAppointmentsForUser = async (req, res) => {
 const updateAppointmentNotes = async (req, res) => {
   const { appointmentId } = req.params;
   const { notes } = req.body;
-  const userId = req.user.userId || req.user.id; // Manejar ambos casos
+  const userId = req.user.id;
 
   try {
     const appointment = await Appointment.findByPk(appointmentId);
