@@ -1,5 +1,4 @@
-const Appointment = require('../models/appointment');
-const User = require('../models/user');
+const { Appointment, User } = require('../models');
 
 // Crear una nueva cita
 const createAppointment = async (req, res) => {
@@ -109,7 +108,7 @@ const getAppointmentsForUser = async (req, res) => {
 const updateAppointmentNotes = async (req, res) => {
   const { appointmentId } = req.params;
   const { notes } = req.body;
-  const userId = req.user.id;
+  const userId = req.user.userId; // Cambiar de req.user.id a req.user.userId
 
   try {
     const appointment = await Appointment.findByPk(appointmentId);
