@@ -20,7 +20,7 @@ router.get('/', authenticate, checkRole('Paciente'), getMedicalRecordsForPatient
 router.get('/specialist', authenticate, checkRole('Especialista'), getMedicalRecordsForSpecialist);
 
 // Ruta para obtener todos los registros médicos para administradores
-router.get('/admin', authenticate, checkRole('Admin'), getMedicalRecordsForAdmin);
+router.get('/admin', authenticate, checkRole('Administrador'), getMedicalRecordsForAdmin);
 
 // Ruta para obtener un registro médico por ID
 router.get('/:id', authenticate, checkRole(['Especialista', 'Paciente']), getMedicalRecordById);

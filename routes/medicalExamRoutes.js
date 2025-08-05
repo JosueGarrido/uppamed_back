@@ -36,7 +36,7 @@ router.get(
 router.get(
   '/admin',
   authenticate,
-  checkRole('Admin'),
+  checkRole('Administrador'),
   getMedicalExamsForAdmin
 );
 
