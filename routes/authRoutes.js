@@ -104,4 +104,110 @@ router.post('/impersonate/:tenantId', authenticate, checkRole('Super Admin'), im
 // Restaurar sesión original del Super Admin
 router.post('/restore-impersonation', authenticate, restoreImpersonation);
 
+// Cambiar contraseña
+router.post('/change-password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    // Validaciones
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Contraseña actual y nueva contraseña son requeridas' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 6 caracteres' });
+    }
+
+    // Obtener usuario
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Verificar contraseña actual
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      return res.status(400).json({ message: 'La contraseña actual es incorrecta' });
+    }
+
+    // Hashear nueva contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+    // Actualizar contraseña
+    await user.update({ password: hashedNewPassword });
+
+    res.json({ message: 'Contraseña cambiada exitosamente' });
+  } catch (error) {
+    console.error('Error al cambiar contraseña:', error);
+    res.status(500).json({ message: 'Error al cambiar la contraseña' });
+  }
+});
+
+// Actualizar perfil propio
+router.put('/profile', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { username, email, area, specialty } = req.body;
+
+    // Validaciones
+    if (!username || !email) {
+      return res.status(400).json({ message: 'Nombre de usuario y email son requeridos' });
+    }
+
+    // Obtener usuario
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Verificar que el email no esté en uso por otro usuario
+    if (email !== user.email) {
+      const existingEmail = await User.findOne({ where: { email } });
+      if (existingEmail) {
+        return res.status(400).json({ message: 'El email ya está en uso' });
+      }
+    }
+
+    // Verificar que el username no esté en uso por otro usuario
+    if (username !== user.username) {
+      const existingUsername = await User.findOne({ where: { username } });
+      if (existingUsername) {
+        return res.status(400).json({ message: 'El nombre de usuario ya está en uso' });
+      }
+    }
+
+    // Validar que especialistas tengan área y especialidad
+    if (user.role === 'Especialista') {
+      if (!area || !specialty) {
+        return res.status(400).json({ 
+          message: 'Los campos área y especialidad son obligatorios para especialistas' 
+        });
+      }
+    }
+
+    // Actualizar perfil
+    const updateData = { username, email };
+    if (user.role === 'Especialista') {
+      updateData.area = area;
+      updateData.specialty = specialty;
+    }
+
+    await user.update(updateData);
+
+    // Devolver usuario actualizado sin contraseña
+    const userWithoutPassword = { ...user.toJSON() };
+    delete userWithoutPassword.password;
+
+    res.json({ 
+      message: 'Perfil actualizado exitosamente',
+      user: userWithoutPassword
+    });
+  } catch (error) {
+    console.error('Error al actualizar perfil:', error);
+    res.status(500).json({ message: 'Error al actualizar el perfil' });
+  }
+});
+
 module.exports = router;
