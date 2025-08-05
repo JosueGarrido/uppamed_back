@@ -60,28 +60,26 @@ const getSpecialistSchedule = async (req, res) => {
 const updateSpecialistSchedule = async (req, res) => {
   const { specialistId } = req.params;
   const { tenantId } = req.params;
-  let schedules = req.body; // Recibe el body completo
+  let schedules = req.body.schedules || req.body; // Recibe schedules del body
+  let breaks = req.body.breaks || []; // Recibe breaks del body
 
   console.log('=== UPDATE SPECIALIST SCHEDULE ===');
   console.log('specialistId:', specialistId);
   console.log('tenantId:', tenantId);
   console.log('req.body received:', JSON.stringify(req.body, null, 2));
+  console.log('schedules:', JSON.stringify(schedules, null, 2));
+  console.log('breaks:', JSON.stringify(breaks, null, 2));
 
-  // Manejar tanto formato de objeto como array directo
+  // Manejar tanto formato de objeto como array directo para schedules
   if (req.body && req.body.schedules) {
     schedules = req.body.schedules;
     console.log('Extracted schedules from object:', JSON.stringify(schedules, null, 2));
-  } else {
+  } else if (Array.isArray(req.body)) {
     schedules = req.body;
     console.log('Using direct schedules array:', JSON.stringify(schedules, null, 2));
   }
 
   try {
-    // Verificar permisos (solo admin o super admin)
-    if (!['Administrador', 'Super Admin'].includes(req.user.role)) {
-      return res.status(403).json({ message: 'Acceso denegado' });
-    }
-
     // Verificar que el especialista existe
     const specialist = await User.findOne({
       where: {
@@ -98,14 +96,24 @@ const updateSpecialistSchedule = async (req, res) => {
     console.log('Specialist found:', specialist.username);
 
     // Eliminar horarios existentes
-    const deletedCount = await SpecialistSchedule.destroy({
+    const deletedSchedulesCount = await SpecialistSchedule.destroy({
       where: {
         specialist_id: specialistId,
         tenant_id: tenantId
       }
     });
 
-    console.log('Deleted existing schedules:', deletedCount);
+    console.log('Deleted existing schedules:', deletedSchedulesCount);
+
+    // Eliminar breaks existentes
+    const deletedBreaksCount = await SpecialistBreak.destroy({
+      where: {
+        specialist_id: specialistId,
+        tenant_id: tenantId
+      }
+    });
+
+    console.log('Deleted existing breaks:', deletedBreaksCount);
 
     // Crear nuevos horarios
     if (schedules && schedules.length > 0) {
@@ -123,7 +131,23 @@ const updateSpecialistSchedule = async (req, res) => {
       console.log('No schedules to create');
     }
 
-    res.status(200).json({ message: 'Horarios actualizados correctamente' });
+    // Crear nuevos breaks
+    if (breaks && breaks.length > 0) {
+      const breaksToCreate = breaks.map(breakItem => ({
+        ...breakItem,
+        specialist_id: specialistId,
+        tenant_id: tenantId
+      }));
+
+      console.log('Breaks to create:', JSON.stringify(breaksToCreate, null, 2));
+
+      const createdBreaks = await SpecialistBreak.bulkCreate(breaksToCreate);
+      console.log('Created breaks count:', createdBreaks.length);
+    } else {
+      console.log('No breaks to create');
+    }
+
+    res.status(200).json({ message: 'Horarios y descansos actualizados correctamente' });
   } catch (error) {
     console.error('Error in updateSpecialistSchedule:', error);
     res.status(500).json({ message: 'Error al actualizar horarios' });
