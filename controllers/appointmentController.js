@@ -74,7 +74,7 @@ const createAppointment = async (req, res) => {
 // Obtener las citas del usuario (paciente o especialista)
 const getAppointmentsForUser = async (req, res) => {
   console.log('🩺 getAppointmentsForUser - req.user:', req.user);
-  const userId = req.user.id;
+  const userId = req.user.userId; // Cambiar de req.user.id a req.user.userId
   const tenantId = req.user.tenant_id;
 
   try {
