@@ -218,11 +218,6 @@ const getAvailableSlots = async (req, res) => {
   const { tenantId } = req.params;
   const { date } = req.query;
 
-  console.log('=== GET AVAILABLE SLOTS ===');
-  console.log('specialistId:', specialistId);
-  console.log('tenantId:', tenantId);
-  console.log('date:', date);
-
   try {
     if (!date) {
       return res.status(400).json({ message: 'Fecha es requerida' });
@@ -230,9 +225,6 @@ const getAvailableSlots = async (req, res) => {
 
     const appointmentDate = new Date(date);
     const dayOfWeek = appointmentDate.getDay();
-
-    console.log('appointmentDate:', appointmentDate);
-    console.log('dayOfWeek:', dayOfWeek);
 
     // Obtener horario del especialista para ese día
     const schedule = await SpecialistSchedule.findOne({
@@ -244,10 +236,7 @@ const getAvailableSlots = async (req, res) => {
       }
     });
 
-    console.log('schedule found:', schedule);
-
     if (!schedule) {
-      console.log('No schedule found for day:', dayOfWeek);
       return res.status(200).json({ availableSlots: [] });
     }
 
@@ -260,27 +249,28 @@ const getAvailableSlots = async (req, res) => {
       }
     });
 
-    console.log('breaks found:', breaks.length);
-
     // Obtener citas existentes para ese día
+    const startOfDay = new Date(appointmentDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(appointmentDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
     const existingAppointments = await Appointment.findAll({
       where: {
         specialist_id: specialistId,
         tenant_id: tenantId,
-        date: appointmentDate,
+        date: {
+          [require('sequelize').Op.between]: [startOfDay, endOfDay]
+        },
         status: { [require('sequelize').Op.notIn]: ['cancelada'] }
       }
     });
-
-    console.log('existing appointments found:', existingAppointments.length);
 
     // Generar slots disponibles (cada 30 minutos)
     const availableSlots = [];
     const startTime = new Date(`2000-01-01T${schedule.start_time}`);
     const endTime = new Date(`2000-01-01T${schedule.end_time}`);
-    
-    console.log('startTime:', startTime);
-    console.log('endTime:', endTime);
     
     let currentTime = new Date(startTime);
     
@@ -297,8 +287,8 @@ const getAvailableSlots = async (req, res) => {
       // Verificar si no hay cita en esta hora
       const hasAppointment = existingAppointments.some(appointment => {
         const appointmentTime = new Date(appointment.date);
-        return appointmentTime.getHours() === currentTime.getHours() && 
-               appointmentTime.getMinutes() === currentTime.getMinutes();
+        const appointmentTimeString = appointmentTime.toTimeString().slice(0, 5);
+        return appointmentTimeString === timeString;
       });
 
       if (!hasBreak && !hasAppointment) {
@@ -309,7 +299,6 @@ const getAvailableSlots = async (req, res) => {
       currentTime.setMinutes(currentTime.getMinutes() + 30);
     }
 
-    console.log('availableSlots generated:', availableSlots);
     res.status(200).json({ availableSlots });
   } catch (error) {
     console.error('Error in getAvailableSlots:', error);
