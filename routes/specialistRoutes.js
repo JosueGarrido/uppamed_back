@@ -52,6 +52,53 @@ router.put('/my-schedule', authenticate, checkRole('Especialista'), async (req, 
   }
 });
 
+// Verificar mi propia disponibilidad
+router.get('/my-availability', authenticate, checkRole('Especialista'), async (req, res) => {
+  try {
+    const specialistId = req.user.id;
+    const tenantId = req.user.tenant_id;
+    const { date, time } = req.query;
+    
+    if (!tenantId) {
+      return res.status(400).json({ message: 'Especialista no tiene tenant asignado' });
+    }
+
+    // Usar el mismo controlador pero con el ID del especialista logueado
+    req.params.specialistId = specialistId;
+    req.params.tenantId = tenantId;
+    req.query.date = date;
+    req.query.time = time;
+    
+    return checkSpecialistAvailability(req, res);
+  } catch (error) {
+    console.error('Error in my-availability route:', error);
+    res.status(500).json({ message: 'Error al verificar mi disponibilidad' });
+  }
+});
+
+// Obtener mis slots disponibles
+router.get('/my-available-slots', authenticate, checkRole('Especialista'), async (req, res) => {
+  try {
+    const specialistId = req.user.id;
+    const tenantId = req.user.tenant_id;
+    const { date } = req.query;
+    
+    if (!tenantId) {
+      return res.status(400).json({ message: 'Especialista no tiene tenant asignado' });
+    }
+
+    // Usar el mismo controlador pero con el ID del especialista logueado
+    req.params.specialistId = specialistId;
+    req.params.tenantId = tenantId;
+    req.query.date = date;
+    
+    return getAvailableSlots(req, res);
+  } catch (error) {
+    console.error('Error in my-available-slots route:', error);
+    res.status(500).json({ message: 'Error al obtener mis slots disponibles' });
+  }
+});
+
 // Rutas para administradores y super admins - VAN DESPUÉS
 // Obtener horarios de un especialista
 router.get('/:tenantId/specialists/:specialistId/schedule', authenticate, getSpecialistSchedule);
