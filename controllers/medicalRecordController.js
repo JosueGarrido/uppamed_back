@@ -165,10 +165,44 @@ const updateMedicalRecord = async (req, res) => {
   }
 };
 
+// Eliminar un registro médico
+const deleteMedicalRecord = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  const tenantId = req.user.tenant_id;
+
+  try {
+    const medicalRecord = await MedicalRecord.findByPk(id);
+    
+    if (!medicalRecord) {
+      return res.status(404).json({ message: 'Registro médico no encontrado' });
+    }
+
+    // Verificar que el especialista sea el creador del registro
+    if (medicalRecord.specialist_id !== userId) {
+      return res.status(403).json({ message: 'Solo puedes eliminar registros que hayas creado' });
+    }
+
+    // Verificar que el registro pertenezca al mismo tenant
+    if (medicalRecord.tenant_id !== tenantId) {
+      return res.status(403).json({ message: 'No tienes permisos para eliminar este registro' });
+    }
+
+    // Eliminar el registro
+    await medicalRecord.destroy();
+
+    res.status(200).json({ message: 'Registro médico eliminado correctamente' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al eliminar el registro médico' });
+  }
+};
+
 module.exports = { 
   createMedicalRecord, 
   getMedicalRecordsForPatient, 
   getMedicalRecordsForSpecialist,
   getMedicalRecordById,
-  updateMedicalRecord
+  updateMedicalRecord,
+  deleteMedicalRecord
 };

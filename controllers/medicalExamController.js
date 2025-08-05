@@ -67,7 +67,41 @@ const getMedicalExamsForUser = async (req, res) => {
   }
 };
 
+// Eliminar un examen médico
+const deleteMedicalExam = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  const tenantId = req.user.tenant_id;
+
+  try {
+    const medicalExam = await MedicalExam.findByPk(id);
+    
+    if (!medicalExam) {
+      return res.status(404).json({ message: 'Examen médico no encontrado' });
+    }
+
+    // Verificar que el especialista sea el creador del examen
+    if (medicalExam.specialist_id !== userId) {
+      return res.status(403).json({ message: 'Solo puedes eliminar exámenes que hayas creado' });
+    }
+
+    // Verificar que el examen pertenezca al mismo tenant
+    if (medicalExam.tenant_id !== tenantId) {
+      return res.status(403).json({ message: 'No tienes permisos para eliminar este examen' });
+    }
+
+    // Eliminar el examen
+    await medicalExam.destroy();
+
+    res.status(200).json({ message: 'Examen médico eliminado correctamente' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al eliminar el examen médico' });
+  }
+};
+
 module.exports = {
   createMedicalExam,
   getMedicalExamsForUser,
+  deleteMedicalExam,
 };

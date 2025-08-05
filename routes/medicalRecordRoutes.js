@@ -1,5 +1,5 @@
 const express = require('express');
-const { createMedicalRecord, getMedicalRecordsForPatient, getMedicalRecordsForSpecialist, updateMedicalRecord, getMedicalRecordById } = require('../controllers/medicalRecordController');
+const { createMedicalRecord, getMedicalRecordsForPatient, getMedicalRecordsForSpecialist, updateMedicalRecord, getMedicalRecordById, deleteMedicalRecord } = require('../controllers/medicalRecordController');
 const authenticate = require('../middlewares/auth');
 const checkRole = require('../middlewares/checkRole');
 
@@ -24,5 +24,8 @@ router.get('/:id', authenticate, checkRole(['Especialista', 'Paciente']), getMed
 
 // Ruta para actualizar un registro médico (solo especialista)
 router.put('/:id', authenticate, checkRole('Especialista'), updateMedicalRecord);
+
+// Ruta para eliminar un registro médico (solo especialista)
+router.delete('/:id', authenticate, checkRole('Especialista'), deleteMedicalRecord);
 
 module.exports = router;
