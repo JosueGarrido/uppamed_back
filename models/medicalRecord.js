@@ -110,9 +110,9 @@ const MedicalRecord = sequelize.define('MedicalRecord', {
   },
   
   // Campos adicionales para compatibilidad
-  diagnosis: { type: DataTypes.TEXT }, // Mantener para compatibilidad
-  treatment: { type: DataTypes.TEXT }, // Mantener para compatibilidad
-  observations: { type: DataTypes.TEXT }, // Mantener para compatibilidad
+  diagnosis: { type: DataTypes.TEXT, defaultValue: '' }, // Mantener para compatibilidad
+  treatment: { type: DataTypes.TEXT, defaultValue: '' }, // Mantener para compatibilidad
+  observations: { type: DataTypes.TEXT, defaultValue: '' }, // Mantener para compatibilidad
   date: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }, // Mantener para compatibilidad
   
 }, {
