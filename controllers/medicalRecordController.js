@@ -3,9 +3,44 @@ const User = require('../models/user');
 const Appointment = require('../models/appointment');
 const { Op } = require('sequelize');
 
-// Crear un nuevo registro médico
+// Crear una nueva historia clínica
 const createMedicalRecord = async (req, res) => {
-  const { patient_id, specialist_id, diagnosis, treatment, observations } = req.body;
+  const { 
+    patient_id, 
+    specialist_id, 
+    clinical_history_number,
+    consultation_reason_a,
+    consultation_reason_b,
+    consultation_reason_c,
+    consultation_reason_d,
+    family_history,
+    clinical_history,
+    surgical_history,
+    gynecological_history,
+    habits,
+    current_illness,
+    systems_review,
+    blood_pressure,
+    oxygen_saturation,
+    heart_rate,
+    respiratory_rate,
+    temperature,
+    weight,
+    height,
+    head_circumference,
+    physical_examination,
+    diagnoses,
+    treatment_plans,
+    evolution_entries,
+    consultation_date,
+    consultation_time,
+    status,
+    // Campos de compatibilidad
+    diagnosis,
+    treatment,
+    observations
+  } = req.body;
+  
   const tenant_id = req.user.tenant_id;
 
   // Verificar si el especialista es válido y pertenece al mismo tenant
@@ -37,15 +72,76 @@ const createMedicalRecord = async (req, res) => {
       patient_id,
       specialist_id,
       tenant_id,
+      clinical_history_number: clinical_history_number || `HCL-${Date.now()}`,
+      consultation_reason_a,
+      consultation_reason_b,
+      consultation_reason_c,
+      consultation_reason_d,
+      family_history,
+      clinical_history,
+      surgical_history,
+      gynecological_history,
+      habits,
+      current_illness,
+      systems_review: systems_review || {
+        sense_organs: 'SP',
+        respiratory: 'SP',
+        cardiovascular: 'SP',
+        digestive: 'SP',
+        genital: 'SP',
+        urinary: 'SP',
+        musculoskeletal: 'SP',
+        endocrine: 'SP',
+        hemolymphatic: 'SP',
+        nervous: 'SP'
+      },
+      blood_pressure,
+      oxygen_saturation,
+      heart_rate,
+      respiratory_rate,
+      temperature,
+      weight,
+      height,
+      head_circumference,
+      physical_examination: physical_examination || {
+        skin_appendages: 'SP',
+        head: 'SP',
+        eyes: 'SP',
+        ears: 'SP',
+        nose: 'SP',
+        mouth: 'SP',
+        oropharynx: 'SP',
+        neck: 'SP',
+        axillae_breasts: 'SP',
+        thorax: 'SP',
+        abdomen: 'SP',
+        vertebral_column: 'SP',
+        groin_perineum: 'SP',
+        upper_limbs: 'SP',
+        lower_limbs: 'SP'
+      },
+      diagnoses: diagnoses || [],
+      treatment_plans,
+      evolution_entries: evolution_entries || [],
+      consultation_date: consultation_date || new Date(),
+      consultation_time: consultation_time || new Date(),
+      status: status || 'borrador',
+      // Campos de compatibilidad
       diagnosis,
       treatment,
-      observations,
+      observations
     });
 
-    res.status(201).json({ message: 'Registro médico creado correctamente', medicalRecord });
+    res.status(201).json({ 
+      message: 'Historia clínica creada correctamente', 
+      medicalRecord 
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error al crear el registro médico', error: error.message });
+    res.status(500).json({ 
+      message: 'Error al crear la historia clínica', 
+      error: error.message 
+    });
   }
 };
 
@@ -261,12 +357,218 @@ const getMedicalRecordsForAdmin = async (req, res) => {
   }
 };
 
+// Agregar diagnóstico a una historia clínica
+const addDiagnosis = async (req, res) => {
+  const { id } = req.params;
+  const { diagnosis, type, cie_code } = req.body; // type: 'presuntivo' o 'definitivo'
+  const userId = req.user.id;
+  const tenantId = req.user.tenant_id;
+
+  try {
+    const medicalRecord = await MedicalRecord.findByPk(id);
+    
+    if (!medicalRecord) {
+      return res.status(404).json({ message: 'Historia clínica no encontrada' });
+    }
+
+    // Verificar permisos
+    if (medicalRecord.specialist_id !== userId && req.user.role !== 'Administrador') {
+      return res.status(403).json({ message: 'No tienes permisos para modificar esta historia clínica' });
+    }
+
+    if (medicalRecord.tenant_id !== tenantId) {
+      return res.status(403).json({ message: 'No tienes permisos para acceder a esta historia clínica' });
+    }
+
+    const newDiagnosis = {
+      id: Date.now(),
+      diagnosis,
+      type,
+      cie_code,
+      date: new Date(),
+      specialist_id: userId
+    };
+
+    const currentDiagnoses = medicalRecord.diagnoses || [];
+    currentDiagnoses.push(newDiagnosis);
+
+    await medicalRecord.update({ diagnoses: currentDiagnoses });
+
+    res.status(200).json({ 
+      message: 'Diagnóstico agregado correctamente', 
+      diagnosis: newDiagnosis 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al agregar el diagnóstico' });
+  }
+};
+
+// Agregar entrada de evolución a una historia clínica
+const addEvolutionEntry = async (req, res) => {
+  const { id } = req.params;
+  const { evolution_note, prescription, prescription_code } = req.body;
+  const userId = req.user.id;
+  const tenantId = req.user.tenant_id;
+
+  try {
+    const medicalRecord = await MedicalRecord.findByPk(id);
+    
+    if (!medicalRecord) {
+      return res.status(404).json({ message: 'Historia clínica no encontrada' });
+    }
+
+    // Verificar permisos
+    if (medicalRecord.specialist_id !== userId && req.user.role !== 'Administrador') {
+      return res.status(403).json({ message: 'No tienes permisos para modificar esta historia clínica' });
+    }
+
+    if (medicalRecord.tenant_id !== tenantId) {
+      return res.status(403).json({ message: 'No tienes permisos para acceder a esta historia clínica' });
+    }
+
+    const newEntry = {
+      id: Date.now(),
+      evolution_note,
+      prescription,
+      prescription_code,
+      date: new Date(),
+      time: new Date(),
+      specialist_id: userId,
+      specialist_name: req.user.username
+    };
+
+    const currentEntries = medicalRecord.evolution_entries || [];
+    currentEntries.push(newEntry);
+
+    await medicalRecord.update({ evolution_entries: currentEntries });
+
+    res.status(200).json({ 
+      message: 'Entrada de evolución agregada correctamente', 
+      entry: newEntry 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al agregar la entrada de evolución' });
+  }
+};
+
+// Actualizar estado de revisión de sistemas
+const updateSystemsReview = async (req, res) => {
+  const { id } = req.params;
+  const { systems_review } = req.body;
+  const userId = req.user.id;
+  const tenantId = req.user.tenant_id;
+
+  try {
+    const medicalRecord = await MedicalRecord.findByPk(id);
+    
+    if (!medicalRecord) {
+      return res.status(404).json({ message: 'Historia clínica no encontrada' });
+    }
+
+    // Verificar permisos
+    if (medicalRecord.specialist_id !== userId && req.user.role !== 'Administrador') {
+      return res.status(403).json({ message: 'No tienes permisos para modificar esta historia clínica' });
+    }
+
+    if (medicalRecord.tenant_id !== tenantId) {
+      return res.status(403).json({ message: 'No tienes permisos para acceder a esta historia clínica' });
+    }
+
+    await medicalRecord.update({ systems_review });
+
+    res.status(200).json({ 
+      message: 'Revisión de sistemas actualizada correctamente', 
+      systems_review 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualizar la revisión de sistemas' });
+  }
+};
+
+// Actualizar estado de examen físico
+const updatePhysicalExamination = async (req, res) => {
+  const { id } = req.params;
+  const { physical_examination } = req.body;
+  const userId = req.user.id;
+  const tenantId = req.user.tenant_id;
+
+  try {
+    const medicalRecord = await MedicalRecord.findByPk(id);
+    
+    if (!medicalRecord) {
+      return res.status(404).json({ message: 'Historia clínica no encontrada' });
+    }
+
+    // Verificar permisos
+    if (medicalRecord.specialist_id !== userId && req.user.role !== 'Administrador') {
+      return res.status(403).json({ message: 'No tienes permisos para modificar esta historia clínica' });
+    }
+
+    if (medicalRecord.tenant_id !== tenantId) {
+      return res.status(403).json({ message: 'No tienes permisos para acceder a esta historia clínica' });
+    }
+
+    await medicalRecord.update({ physical_examination });
+
+    res.status(200).json({ 
+      message: 'Examen físico actualizado correctamente', 
+      physical_examination 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualizar el examen físico' });
+  }
+};
+
+// Cambiar estado de la historia clínica
+const updateStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const userId = req.user.id;
+  const tenantId = req.user.tenant_id;
+
+  try {
+    const medicalRecord = await MedicalRecord.findByPk(id);
+    
+    if (!medicalRecord) {
+      return res.status(404).json({ message: 'Historia clínica no encontrada' });
+    }
+
+    // Verificar permisos
+    if (medicalRecord.specialist_id !== userId && req.user.role !== 'Administrador') {
+      return res.status(403).json({ message: 'No tienes permisos para modificar esta historia clínica' });
+    }
+
+    if (medicalRecord.tenant_id !== tenantId) {
+      return res.status(403).json({ message: 'No tienes permisos para acceder a esta historia clínica' });
+    }
+
+    await medicalRecord.update({ status });
+
+    res.status(200).json({ 
+      message: 'Estado de la historia clínica actualizado correctamente', 
+      status 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualizar el estado' });
+  }
+};
+
 module.exports = {
   createMedicalRecord,
   getMedicalRecordsForPatient,
   getMedicalRecordsForSpecialist,
-  getMedicalRecordsForAdmin,
-  updateMedicalRecord,
   getMedicalRecordById,
-  deleteMedicalRecord
+  updateMedicalRecord,
+  deleteMedicalRecord,
+  getMedicalRecordsForAdmin,
+  addDiagnosis,
+  addEvolutionEntry,
+  updateSystemsReview,
+  updatePhysicalExamination,
+  updateStatus
 };
