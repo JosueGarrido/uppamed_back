@@ -45,7 +45,7 @@ app.get('/health', (req, res) => {
 
 // Ruta por defecto
 app.get('/', (req, res) => {
-  res.json({ message: 'UppaMed API v1.0.0', status: 'running' });
+  res.json({ message: 'UppaMed API v1.0.0', status: 'running', updated: new Date().toISOString() });
 });
 
 // Cargar rutas de forma segura
