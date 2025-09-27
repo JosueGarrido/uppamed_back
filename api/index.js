@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Configuración de CORS para desarrollo y producción
+// Configuración de CORS para desarrollo y producción - ACTUALIZADO 2025-09-27
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
@@ -20,12 +20,19 @@ const allowedOrigins = [
   'https://uppamed.uppacloud.com'
 ];
 
+console.log('🌐 CORS Origins configurados:', allowedOrigins);
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  
+  console.log(`🔍 CORS Check - Origin: ${origin}, Allowed: ${allowedOrigins.includes(origin)}`);
   
   if (allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
+    console.log(`✅ CORS Permitido para: ${origin}`);
+  } else {
+    console.log(`❌ CORS Rechazado para: ${origin}`);
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
