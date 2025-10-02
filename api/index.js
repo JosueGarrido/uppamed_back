@@ -51,8 +51,9 @@ app.get('/test-certificates', (req, res) => {
 // Endpoints funcionales de certificados médicos (sin autenticación temporal)
 app.get('/medicalCertificates/test', async (req, res) => {
   try {
-    // Intentar usar el modelo directamente
-    const { MedicalCertificate } = require('../models');
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/database');
+    const MedicalCertificate = require('../models/medicalCertificate')(sequelize, require('sequelize').DataTypes);
     
     const { page = 1, limit = 10, search = '', status = '' } = req.query;
     const offset = (page - 1) * limit;
@@ -112,8 +113,9 @@ app.get('/medicalCertificates/test', async (req, res) => {
 
 app.post('/medicalCertificates/test', async (req, res) => {
   try {
-    // Intentar usar el modelo directamente
-    const { MedicalCertificate } = require('../models');
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/database');
+    const MedicalCertificate = require('../models/medicalCertificate')(sequelize, require('sequelize').DataTypes);
     
     // Generar número de certificado único
     const today = new Date();
