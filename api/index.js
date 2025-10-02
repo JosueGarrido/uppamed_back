@@ -68,6 +68,17 @@ app.post('/test-logs', (req, res) => {
   });
 });
 
+// Endpoint de prueba para verificar si los cambios se están desplegando
+app.post('/test-deployment', (req, res) => {
+  console.log('🚀 TEST DEPLOYMENT - Cambios desplegados correctamente');
+  
+  res.json({ 
+    success: true, 
+    message: 'Cambios desplegados - ' + new Date().toISOString(),
+    version: 'v2.0'
+  });
+});
+
 // Endpoint de debug para verificar autenticación
 app.post('/debug-auth', async (req, res) => {
   console.log('🔍 POST /debug-auth - Headers recibidos:', {
