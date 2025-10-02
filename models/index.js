@@ -4,6 +4,7 @@ const Appointment = require('./appointment');
 const MedicalRecord = require('./medicalRecord');
 const MedicalExam = require('./medicalExam');
 const MedicalCertificate = require('./medicalCertificate');
+const MedicalPrescription = require('./medicalPrescription');
 const SpecialistSchedule = require('./specialistSchedule');
 const SpecialistBreak = require('./specialistBreak');
 
@@ -33,6 +34,11 @@ try {
   MedicalCertificate.belongsTo(User, { foreignKey: 'specialist_id', as: 'specialist' });
   MedicalCertificate.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
 
+  // Asociaciones para recetas médicas
+  MedicalPrescription.belongsTo(User, { foreignKey: 'patient_id', as: 'patient' });
+  MedicalPrescription.belongsTo(User, { foreignKey: 'specialist_id', as: 'specialist' });
+  MedicalPrescription.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
+
   // Asociaciones para horarios de especialistas
   SpecialistSchedule.belongsTo(User, { foreignKey: 'specialist_id', as: 'scheduleSpecialist' });
   SpecialistSchedule.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
@@ -55,6 +61,7 @@ module.exports = {
   MedicalRecord,
   MedicalExam,
   MedicalCertificate,
+  MedicalPrescription,
   SpecialistSchedule,
   SpecialistBreak
 }; 
