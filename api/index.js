@@ -217,11 +217,24 @@ try {
 }
 
 // Endpoints reales de certificados médicos con autenticación
-const authenticate = require('../middlewares/auth');
-const checkRole = require('../middlewares/checkRole');
-
-app.post('/medicalCertificates', authenticate, checkRole(['Especialista']), async (req, res) => {
+app.post('/medicalCertificates', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
   try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Verificar que sea especialista
+    if (req.user.role !== 'Especialista') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo especialistas pueden crear certificados.' });
+    }
+    
+    // Procesar creación de certificado
     // Cargar Sequelize y modelos correctamente
     const sequelize = require('../config/db');
     const { DataTypes } = require('sequelize');
@@ -257,10 +270,34 @@ app.post('/medicalCertificates', authenticate, checkRole(['Especialista']), asyn
       error: error.message
     });
   }
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
+    });
+  }
 });
 
-app.get('/medicalCertificates/specialist', authenticate, checkRole(['Especialista']), async (req, res) => {
+app.get('/medicalCertificates/specialist', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
   try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Verificar que sea especialista
+    if (req.user.role !== 'Especialista') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo especialistas pueden ver certificados.' });
+    }
+    
+    // Procesar obtención de certificados
     // Cargar Sequelize y modelos correctamente
     const sequelize = require('../config/db');
     const { DataTypes } = require('sequelize');
@@ -313,6 +350,14 @@ app.get('/medicalCertificates/specialist', authenticate, checkRole(['Especialist
       success: false, 
       message: 'Error al obtener los certificados médicos',
       error: error.message
+    });
+  }
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
     });
   }
 });
