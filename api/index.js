@@ -526,6 +526,382 @@ app.patch('/medicalCertificates/:id/void', async (req, res) => {
   }
 });
 
+// Endpoints reales de recetas médicas con autenticación
+app.post('/medicalPrescriptions', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Verificar que sea especialista
+    if (req.user.role !== 'Especialista') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo especialistas pueden crear recetas.' });
+    }
+    
+    // Procesar creación de receta
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalPrescription = require('../models/medicalPrescription')(sequelize, DataTypes);
+    
+    // Generar número de receta único
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const timestamp = Date.now().toString().slice(-4);
+    const prescriptionNumber = `REC-${year}${month}${day}-${timestamp}`;
+    
+    const prescriptionData = {
+      ...req.body,
+      prescription_number: prescriptionNumber,
+      specialist_id: req.user.id,
+      tenant_id: req.user.tenant_id
+    };
+    
+    const prescription = await MedicalPrescription.create(prescriptionData);
+    
+    res.json({ 
+      success: true, 
+      message: 'Receta médica creada exitosamente',
+      data: prescription
+    });
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
+    });
+  }
+});
+
+app.get('/medicalPrescriptions/specialist', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Verificar que sea especialista
+    if (req.user.role !== 'Especialista') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo especialistas pueden ver recetas.' });
+    }
+    
+    // Procesar obtención de recetas
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalPrescription = require('../models/medicalPrescription')(sequelize, DataTypes);
+    
+    const { page = 1, limit = 10, search = '', status = '' } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let whereClause = {
+      specialist_id: req.user.id
+    };
+    
+    if (search) {
+      whereClause = {
+        ...whereClause,
+        [require('sequelize').Op.or]: [
+          { patient_name: { [require('sequelize').Op.like]: `%${search}%` } },
+          { diagnosis: { [require('sequelize').Op.like]: `%${search}%` } },
+          { prescription_number: { [require('sequelize').Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+    
+    if (status) {
+      whereClause.status = status;
+    }
+    
+    const { count, rows } = await MedicalPrescription.findAndCountAll({
+      where: whereClause,
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        prescriptions: rows,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(count / limit)
+        }
+      }
+    });
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
+    });
+  }
+});
+
+// Obtener receta por ID
+app.get('/medicalPrescriptions/:id', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalPrescription = require('../models/medicalPrescription')(sequelize, DataTypes);
+    
+    const prescription = await MedicalPrescription.findOne({
+      where: {
+        id: req.params.id,
+        specialist_id: req.user.id // Solo puede ver sus propias recetas
+      }
+    });
+    
+    if (!prescription) {
+      return res.status(404).json({
+        success: false,
+        message: 'Receta no encontrada'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: prescription
+    });
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
+    });
+  }
+});
+
+// Actualizar receta médica
+app.put('/medicalPrescriptions/:id', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Verificar que sea especialista
+    if (req.user.role !== 'Especialista') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo especialistas pueden editar recetas.' });
+    }
+    
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalPrescription = require('../models/medicalPrescription')(sequelize, DataTypes);
+    
+    const prescription = await MedicalPrescription.findOne({
+      where: {
+        id: req.params.id,
+        specialist_id: req.user.id // Solo puede editar sus propias recetas
+      }
+    });
+    
+    if (!prescription) {
+      return res.status(404).json({
+        success: false,
+        message: 'Receta no encontrada'
+      });
+    }
+    
+    // No permitir editar recetas anuladas
+    if (prescription.status === 'anulado') {
+      return res.status(400).json({
+        success: false,
+        message: 'No se puede editar una receta anulada'
+      });
+    }
+    
+    await prescription.update(req.body);
+    
+    res.json({
+      success: true,
+      message: 'Receta actualizada exitosamente',
+      data: prescription
+    });
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
+    });
+  }
+});
+
+// Anular receta médica
+app.patch('/medicalPrescriptions/:id/void', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Verificar que sea especialista
+    if (req.user.role !== 'Especialista') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo especialistas pueden anular recetas.' });
+    }
+    
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalPrescription = require('../models/medicalPrescription')(sequelize, DataTypes);
+    
+    const prescription = await MedicalPrescription.findOne({
+      where: {
+        id: req.params.id,
+        specialist_id: req.user.id // Solo puede anular sus propias recetas
+      }
+    });
+    
+    if (!prescription) {
+      return res.status(404).json({
+        success: false,
+        message: 'Receta no encontrada'
+      });
+    }
+    
+    // Verificar que no esté ya anulada
+    if (prescription.status === 'anulado') {
+      return res.status(400).json({
+        success: false,
+        message: 'La receta ya está anulada'
+      });
+    }
+    
+    await prescription.update({ 
+      status: 'anulado',
+      observations: req.body.reason || 'Anulada por el especialista'
+    });
+    
+    res.json({
+      success: true,
+      message: 'Receta anulada exitosamente',
+      data: prescription
+    });
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
+    });
+  }
+});
+
+// Obtener recetas del paciente
+app.get('/medicalPrescriptions/patient', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Verificar que sea paciente
+    if (req.user.role !== 'Paciente') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo pacientes pueden ver sus recetas.' });
+    }
+    
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalPrescription = require('../models/medicalPrescription')(sequelize, DataTypes);
+    
+    const { page = 1, limit = 10, search = '', status = '' } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let whereClause = {
+      patient_id: req.user.id
+    };
+    
+    if (search) {
+      whereClause = {
+        ...whereClause,
+        [require('sequelize').Op.or]: [
+          { diagnosis: { [require('sequelize').Op.like]: `%${search}%` } },
+          { prescription_number: { [require('sequelize').Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+    
+    if (status) {
+      whereClause.status = status;
+    }
+    
+    const { count, rows } = await MedicalPrescription.findAndCountAll({
+      where: whereClause,
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        prescriptions: rows,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(count / limit)
+        }
+      }
+    });
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
+    });
+  }
+});
+
 try {
   console.log('🔄 Intentando cargar rutas de certificados médicos...');
   const medicalCertificateRoutes = require('../routes/medicalCertificateRoutes');
@@ -537,16 +913,8 @@ try {
   console.error('📋 Stack trace:', error.stack);
 }
 
-try {
-  console.log('🔄 Intentando cargar rutas de recetas médicas...');
-  const medicalPrescriptionRoutes = require('../routes/medicalPrescriptionRoutes');
-  console.log('📦 Rutas de recetas médicas importadas correctamente');
-  app.use('/medicalPrescriptions', medicalPrescriptionRoutes);
-  console.log('✅ Ruta /medicalPrescriptions cargada y registrada');
-} catch (error) {
-  console.error('❌ Error cargando ruta /medicalPrescriptions:', error.message);
-  console.error('📋 Stack trace:', error.stack);
-}
+// Las rutas de recetas médicas están implementadas directamente arriba
+console.log('✅ Endpoints de recetas médicas implementados directamente');
 
 console.log('📊 Carga de rutas completada');
 
