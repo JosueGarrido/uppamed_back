@@ -707,11 +707,17 @@ app.post('/medicalPrescriptions', async (req, res) => {
     const timestamp = Date.now().toString().slice(-4);
     const prescriptionNumber = `REC-${year}${month}${day}-${timestamp}`;
     
+    // Limpiar datos antes de guardar
     const prescriptionData = {
       ...req.body,
       prescription_number: prescriptionNumber,
       specialist_id: req.user.id,
-      tenant_id: req.user.tenant_id
+      tenant_id: req.user.tenant_id,
+      // Convertir strings vacíos o 'Invalid date' a null para campos de fecha
+      next_appointment_date: req.body.next_appointment_date && req.body.next_appointment_date !== 'Invalid date' 
+        ? req.body.next_appointment_date 
+        : null,
+      issue_date: req.body.issue_date || new Date().toISOString().split('T')[0]
     };
     
     const prescription = await MedicalPrescription.create(prescriptionData);
@@ -722,18 +728,31 @@ app.post('/medicalPrescriptions', async (req, res) => {
       data: prescription
     });
   } catch (authError) {
-    console.error('❌ Error de autenticación:', {
+    console.error('❌ Error en endpoint:', {
       message: authError.message,
       name: authError.name,
       stack: authError.stack
     });
-    res.status(401).json({ 
-      success: false, 
-      message: 'Token inválido',
-      error: authError.message,
-      errorName: authError.name,
-      debug: debugInfo
-    });
+    
+    // Distinguir entre errores de autenticación y errores de base de datos
+    if (authError.name === 'JsonWebTokenError' || authError.name === 'TokenExpiredError') {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Token inválido',
+        error: authError.message,
+        errorName: authError.name,
+        debug: debugInfo
+      });
+    } else {
+      // Error de base de datos u otro error
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error al crear la receta médica',
+        error: authError.message,
+        errorName: authError.name,
+        debug: debugInfo
+      });
+    }
   }
 });
 
