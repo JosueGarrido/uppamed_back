@@ -921,7 +921,19 @@ app.put('/medicalPrescriptions/:id', async (req, res) => {
       });
     }
     
-    await prescription.update(req.body);
+    // Limpiar datos antes de actualizar
+    const updateData = {
+      ...req.body,
+      // Convertir strings vacíos o 'Invalid date' a null para campos de fecha
+      next_appointment_date: req.body.next_appointment_date && req.body.next_appointment_date !== 'Invalid date' 
+        ? req.body.next_appointment_date 
+        : null,
+      issue_date: req.body.issue_date && req.body.issue_date !== 'Invalid date'
+        ? req.body.issue_date
+        : prescription.issue_date
+    };
+    
+    await prescription.update(updateData);
     
     res.json({
       success: true,
@@ -929,12 +941,25 @@ app.put('/medicalPrescriptions/:id', async (req, res) => {
       data: prescription
     });
   } catch (authError) {
-    console.error('Error de autenticación:', authError);
-    res.status(401).json({ 
-      success: false, 
-      message: 'Token inválido',
-      error: authError.message
-    });
+    console.error('Error en actualización:', authError);
+    
+    // Distinguir entre errores de autenticación y errores de base de datos
+    if (authError.name === 'JsonWebTokenError' || authError.name === 'TokenExpiredError') {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Token inválido',
+        error: authError.message,
+        errorName: authError.name
+      });
+    } else {
+      // Error de base de datos u otro error
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error al actualizar la receta médica',
+        error: authError.message,
+        errorName: authError.name
+      });
+    }
   }
 });
 
