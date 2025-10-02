@@ -53,6 +53,21 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'API funcionando', timestamp: new Date().toISOString() });
 });
 
+// Endpoint de prueba para verificar logs
+app.post('/test-logs', (req, res) => {
+  console.log('🧪 TEST LOGS - Endpoint ejecutado');
+  console.log('🧪 Headers recibidos:', req.headers);
+  console.log('🧪 Body recibido:', req.body);
+  
+  res.json({ 
+    success: true, 
+    message: 'Logs de prueba',
+    timestamp: new Date().toISOString(),
+    headers: req.headers,
+    body: req.body
+  });
+});
+
 // Endpoint de debug para verificar autenticación
 app.post('/debug-auth', async (req, res) => {
   console.log('🔍 POST /debug-auth - Headers recibidos:', {
