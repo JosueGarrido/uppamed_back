@@ -830,6 +830,78 @@ app.get('/medicalPrescriptions/specialist', async (req, res) => {
   }
 });
 
+// Obtener recetas del paciente (DEBE IR ANTES de /:id para evitar conflicto de rutas)
+app.get('/medicalPrescriptions/patient', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Verificar que sea paciente
+    if (req.user.role !== 'Paciente') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo pacientes pueden ver sus recetas.' });
+    }
+    
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalPrescription = require('../models/medicalPrescription')(sequelize, DataTypes);
+    
+    const { page = 1, limit = 10, search = '', status = '' } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let whereClause = {
+      patient_id: req.user.id
+    };
+    
+    if (search) {
+      whereClause = {
+        ...whereClause,
+        [require('sequelize').Op.or]: [
+          { diagnosis: { [require('sequelize').Op.like]: `%${search}%` } },
+          { prescription_number: { [require('sequelize').Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+    
+    if (status) {
+      whereClause.status = status;
+    }
+    
+    const { count, rows } = await MedicalPrescription.findAndCountAll({
+      where: whereClause,
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        prescriptions: rows,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          totalPages: Math.ceil(count / limit)
+        }
+      }
+    });
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
+    });
+  }
+});
+
 // Obtener receta por ID
 app.get('/medicalPrescriptions/:id', async (req, res) => {
   // Verificación de autenticación manual
@@ -1017,79 +1089,6 @@ app.patch('/medicalPrescriptions/:id/void', async (req, res) => {
       success: true,
       message: 'Receta anulada exitosamente',
       data: prescription
-    });
-  } catch (authError) {
-    console.error('Error de autenticación:', authError);
-    res.status(401).json({ 
-      success: false, 
-      message: 'Token inválido',
-      error: authError.message
-    });
-  }
-});
-
-// Obtener recetas del paciente
-app.get('/medicalPrescriptions/patient', async (req, res) => {
-  // Verificación de autenticación manual
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
-  }
-  
-  try {
-    const jwt = require('jsonwebtoken');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    
-    // Verificar que sea paciente
-    if (req.user.role !== 'Paciente') {
-      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo pacientes pueden ver sus recetas.' });
-    }
-    
-    // Cargar Sequelize y modelos correctamente
-    const sequelize = require('../config/db');
-    const { DataTypes } = require('sequelize');
-    const MedicalPrescription = require('../models/medicalPrescription')(sequelize, DataTypes);
-    
-    const { page = 1, limit = 10, search = '', status = '' } = req.query;
-    const offset = (page - 1) * limit;
-    
-    let whereClause = {
-      patient_id: req.user.id
-    };
-    
-    if (search) {
-      whereClause = {
-        ...whereClause,
-        [require('sequelize').Op.or]: [
-          { diagnosis: { [require('sequelize').Op.like]: `%${search}%` } },
-          { prescription_number: { [require('sequelize').Op.like]: `%${search}%` } }
-        ]
-      };
-    }
-    
-    if (status) {
-      whereClause.status = status;
-    }
-    
-    const { count, rows } = await MedicalPrescription.findAndCountAll({
-      where: whereClause,
-      order: [['createdAt', 'DESC']],
-      limit: parseInt(limit),
-      offset: parseInt(offset)
-    });
-    
-    res.json({
-      success: true,
-      data: {
-        prescriptions: rows,
-        pagination: {
-          total: count,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          totalPages: Math.ceil(count / limit)
-        }
-      }
     });
   } catch (authError) {
     console.error('Error de autenticación:', authError);
