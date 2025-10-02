@@ -43,6 +43,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'API funcionando', timestamp: new Date().toISOString() });
 });
 
+// Ruta de prueba para certificados médicos
+app.get('/test-certificates', (req, res) => {
+  res.json({ status: 'ok', message: 'Certificados médicos endpoint test', timestamp: new Date().toISOString() });
+});
+
 // Ruta por defecto
 app.get('/', (req, res) => {
   res.json({ message: 'UppaMed API v1.0.0', status: 'running', updated: new Date().toISOString() });
