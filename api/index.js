@@ -615,6 +615,8 @@ app.patch('/medicalCertificates/:id/void', async (req, res) => {
 });
 
 // Endpoints reales de recetas médicas con autenticación
+// IMPORTANTE: Las rutas específicas deben ir ANTES que las rutas con parámetros
+
 app.post('/medicalPrescriptions', async (req, res) => {
   console.log('🚀 POST /medicalPrescriptions - ENDPOINT EJECUTADO');
   
