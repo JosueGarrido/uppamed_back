@@ -446,6 +446,64 @@ app.get('/medicalCertificates/specialist', async (req, res) => {
   }
 });
 
+// Obtener certificados del paciente (DEBE IR ANTES de /:id para evitar conflicto de rutas)
+app.get('/medicalCertificates/patient', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Verificar que sea paciente
+    if (req.user.role !== 'Paciente') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo pacientes pueden ver sus certificados.' });
+    }
+    
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalCertificate = require('../models/medicalCertificate')(sequelize, DataTypes);
+    
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+    
+    // Obtener todos los certificados del paciente (activos y anulados)
+    const { count, rows } = await MedicalCertificate.findAndCountAll({
+      where: {
+        patient_id: req.user.id
+      },
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        certificates: rows,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(count / limit)
+        }
+      }
+    });
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
+    });
+  }
+});
+
 // Obtener certificado por ID
 app.get('/medicalCertificates/:id', async (req, res) => {
   // Verificación de autenticación manual
@@ -459,21 +517,30 @@ app.get('/medicalCertificates/:id', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     
-    // Verificar que sea especialista
-    if (req.user.role !== 'Especialista') {
-      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo especialistas pueden ver certificados.' });
-    }
-    
     // Cargar Sequelize y modelos correctamente
     const sequelize = require('../config/db');
     const { DataTypes } = require('sequelize');
     const MedicalCertificate = require('../models/medicalCertificate')(sequelize, DataTypes);
     
+    // Construir la cláusula WHERE según el rol del usuario
+    let whereClause = { id: req.params.id };
+    
+    if (req.user.role === 'Especialista') {
+      // Los especialistas solo pueden ver sus propios certificados
+      whereClause.specialist_id = req.user.id;
+    } else if (req.user.role === 'Paciente') {
+      // Los pacientes solo pueden ver certificados donde ellos son el paciente
+      whereClause.patient_id = req.user.id;
+    } else {
+      // Otros roles no tienen acceso
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permisos para ver este certificado'
+      });
+    }
+    
     const certificate = await MedicalCertificate.findOne({
-      where: {
-        id: req.params.id,
-        specialist_id: req.user.id // Solo puede ver sus propios certificados
-      }
+      where: whereClause
     });
     
     if (!certificate) {
