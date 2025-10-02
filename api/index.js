@@ -48,6 +48,40 @@ app.get('/test-certificates', (req, res) => {
   res.json({ status: 'ok', message: 'Certificados médicos endpoint test', timestamp: new Date().toISOString() });
 });
 
+// Endpoint de prueba para verificar autenticación
+app.get('/test-auth', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Token de acceso requerido',
+      headers: req.headers
+    });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    res.json({
+      success: true,
+      message: 'Token válido',
+      user: {
+        id: decoded.id,
+        role: decoded.role,
+        tenant_id: decoded.tenant_id
+      }
+    });
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: 'Token inválido',
+      error: error.message
+    });
+  }
+});
+
 // Endpoints funcionales de certificados médicos (sin autenticación temporal)
 app.get('/medicalCertificates/test', async (req, res) => {
   try {
