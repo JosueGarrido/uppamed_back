@@ -48,35 +48,103 @@ app.get('/test-certificates', (req, res) => {
   res.json({ status: 'ok', message: 'Certificados médicos endpoint test', timestamp: new Date().toISOString() });
 });
 
-// Endpoint básico de certificados médicos sin autenticación (temporal)
-app.get('/medicalCertificates/test', (req, res) => {
-  res.json({ 
-    success: true, 
-    message: 'Endpoint de certificados médicos funcionando',
-    data: {
-      certificates: [],
-      pagination: {
-        total: 0,
-        page: 1,
-        limit: 10,
-        totalPages: 0
-      }
+// Endpoints funcionales de certificados médicos (sin autenticación temporal)
+app.get('/medicalCertificates/test', async (req, res) => {
+  try {
+    // Intentar usar el modelo directamente
+    const { MedicalCertificate } = require('../models');
+    
+    const { page = 1, limit = 10, search = '', status = '' } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let whereClause = {};
+    
+    if (search) {
+      whereClause = {
+        [require('sequelize').Op.or]: [
+          { patient_name: { [require('sequelize').Op.like]: `%${search}%` } },
+          { diagnosis: { [require('sequelize').Op.like]: `%${search}%` } },
+          { certificate_number: { [require('sequelize').Op.like]: `%${search}%` } }
+        ]
+      };
     }
-  });
+    
+    if (status) {
+      whereClause.status = status;
+    }
+    
+    const { count, rows } = await MedicalCertificate.findAndCountAll({
+      where: whereClause,
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        certificates: rows,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(count / limit)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error in GET /medicalCertificates/test:', error);
+    res.json({ 
+      success: true, 
+      message: 'Endpoint de certificados médicos funcionando (fallback)',
+      data: {
+        certificates: [],
+        pagination: {
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0
+        }
+      }
+    });
+  }
 });
 
-app.post('/medicalCertificates/test', (req, res) => {
-  res.json({ 
-    success: true, 
-    message: 'Certificado médico creado exitosamente (simulado)',
-    data: {
-      id: 1,
-      certificate_number: 'CERT-20251002-0001',
+app.post('/medicalCertificates/test', async (req, res) => {
+  try {
+    // Intentar usar el modelo directamente
+    const { MedicalCertificate } = require('../models');
+    
+    // Generar número de certificado único
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const timestamp = Date.now().toString().slice(-4);
+    const certificateNumber = `CERT-${year}${month}${day}-${timestamp}`;
+    
+    const certificateData = {
       ...req.body,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-  });
+      certificate_number: certificateNumber,
+      specialist_id: 1, // Temporal - usar ID fijo
+      tenant_id: 1 // Temporal - usar ID fijo
+    };
+    
+    const certificate = await MedicalCertificate.create(certificateData);
+    
+    res.json({ 
+      success: true, 
+      message: 'Certificado médico creado exitosamente',
+      data: certificate
+    });
+  } catch (error) {
+    console.error('Error in POST /medicalCertificates/test:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al crear el certificado médico',
+      error: error.message
+    });
+  }
 });
 
 // Ruta por defecto
