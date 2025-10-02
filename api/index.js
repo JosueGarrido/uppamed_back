@@ -626,9 +626,26 @@ app.post('/medicalPrescriptions', async (req, res) => {
     
     // Procesar creación de receta
     // Cargar Sequelize y modelos correctamente
+    console.log('🔍 Cargando modelos para receta médica...');
+    
     const sequelize = require('../config/db');
     const { DataTypes } = require('sequelize');
-    const MedicalPrescription = require('../models/medicalPrescription')(sequelize, DataTypes);
+    
+    console.log('🔍 Sequelize cargado:', !!sequelize);
+    console.log('🔍 DataTypes cargado:', !!DataTypes);
+    
+    let MedicalPrescription;
+    try {
+      MedicalPrescription = require('../models/medicalPrescription')(sequelize, DataTypes);
+      console.log('✅ Modelo MedicalPrescription cargado:', !!MedicalPrescription);
+    } catch (modelError) {
+      console.error('❌ Error cargando modelo MedicalPrescription:', modelError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error cargando modelo de receta médica',
+        error: modelError.message
+      });
+    }
     
     // Generar número de receta único
     const today = new Date();
