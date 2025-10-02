@@ -114,11 +114,14 @@ try {
 }
 
 try {
+  console.log('🔄 Intentando cargar rutas de certificados médicos...');
   const medicalCertificateRoutes = require('../routes/medicalCertificateRoutes');
+  console.log('📦 Rutas de certificados médicos importadas correctamente');
   app.use('/medicalCertificates', medicalCertificateRoutes);
-  console.log('✅ Ruta /medicalCertificates cargada');
+  console.log('✅ Ruta /medicalCertificates cargada y registrada');
 } catch (error) {
   console.error('❌ Error cargando ruta /medicalCertificates:', error.message);
+  console.error('📋 Stack trace:', error.stack);
 }
 
 console.log('📊 Carga de rutas completada');
