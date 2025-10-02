@@ -347,6 +347,185 @@ app.get('/medicalCertificates/specialist', async (req, res) => {
   }
 });
 
+// Obtener certificado por ID
+app.get('/medicalCertificates/:id', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Verificar que sea especialista
+    if (req.user.role !== 'Especialista') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo especialistas pueden ver certificados.' });
+    }
+    
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalCertificate = require('../models/medicalCertificate')(sequelize, DataTypes);
+    
+    const certificate = await MedicalCertificate.findOne({
+      where: {
+        id: req.params.id,
+        specialist_id: req.user.id // Solo puede ver sus propios certificados
+      }
+    });
+    
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificado no encontrado'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: certificate
+    });
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
+    });
+  }
+});
+
+// Actualizar certificado médico
+app.put('/medicalCertificates/:id', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Verificar que sea especialista
+    if (req.user.role !== 'Especialista') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo especialistas pueden editar certificados.' });
+    }
+    
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalCertificate = require('../models/medicalCertificate')(sequelize, DataTypes);
+    
+    const certificate = await MedicalCertificate.findOne({
+      where: {
+        id: req.params.id,
+        specialist_id: req.user.id // Solo puede editar sus propios certificados
+      }
+    });
+    
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificado no encontrado'
+      });
+    }
+    
+    // No permitir editar certificados anulados
+    if (certificate.status === 'anulado') {
+      return res.status(400).json({
+        success: false,
+        message: 'No se puede editar un certificado anulado'
+      });
+    }
+    
+    await certificate.update(req.body);
+    
+    res.json({
+      success: true,
+      message: 'Certificado actualizado exitosamente',
+      data: certificate
+    });
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
+    });
+  }
+});
+
+// Anular certificado médico
+app.patch('/medicalCertificates/:id/void', async (req, res) => {
+  // Verificación de autenticación manual
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    
+    // Verificar que sea especialista
+    if (req.user.role !== 'Especialista') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo especialistas pueden anular certificados.' });
+    }
+    
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalCertificate = require('../models/medicalCertificate')(sequelize, DataTypes);
+    
+    const certificate = await MedicalCertificate.findOne({
+      where: {
+        id: req.params.id,
+        specialist_id: req.user.id // Solo puede anular sus propios certificados
+      }
+    });
+    
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificado no encontrado'
+      });
+    }
+    
+    // Verificar que no esté ya anulado
+    if (certificate.status === 'anulado') {
+      return res.status(400).json({
+        success: false,
+        message: 'El certificado ya está anulado'
+      });
+    }
+    
+    await certificate.update({ 
+      status: 'anulado',
+      void_reason: req.body.reason || 'Anulado por el especialista',
+      void_date: new Date()
+    });
+    
+    res.json({
+      success: true,
+      message: 'Certificado anulado exitosamente',
+      data: certificate
+    });
+  } catch (authError) {
+    console.error('Error de autenticación:', authError);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido',
+      error: authError.message
+    });
+  }
+});
+
 try {
   console.log('🔄 Intentando cargar rutas de certificados médicos...');
   const medicalCertificateRoutes = require('../routes/medicalCertificateRoutes');
