@@ -48,6 +48,37 @@ app.get('/test-certificates', (req, res) => {
   res.json({ status: 'ok', message: 'Certificados médicos endpoint test', timestamp: new Date().toISOString() });
 });
 
+// Endpoint básico de certificados médicos sin autenticación (temporal)
+app.get('/medicalCertificates/test', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Endpoint de certificados médicos funcionando',
+    data: {
+      certificates: [],
+      pagination: {
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0
+      }
+    }
+  });
+});
+
+app.post('/medicalCertificates/test', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Certificado médico creado exitosamente (simulado)',
+    data: {
+      id: 1,
+      certificate_number: 'CERT-20251002-0001',
+      ...req.body,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+  });
+});
+
 // Ruta por defecto
 app.get('/', (req, res) => {
   res.json({ message: 'UppaMed API v1.0.0', status: 'running', updated: new Date().toISOString() });
