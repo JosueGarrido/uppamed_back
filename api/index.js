@@ -43,6 +43,69 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'API funcionando', timestamp: new Date().toISOString() });
 });
 
+// Endpoint de debug para verificar autenticación
+app.post('/debug-auth', async (req, res) => {
+  console.log('🔍 POST /debug-auth - Headers recibidos:', {
+    authorization: req.headers.authorization,
+    contentType: req.headers['content-type'],
+    userAgent: req.headers['user-agent']
+  });
+  
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  console.log('🔍 Token extraído:', {
+    hasToken: !!token,
+    tokenLength: token?.length,
+    tokenStart: token?.substring(0, 20) + '...',
+    jwtSecret: !!process.env.JWT_SECRET,
+    jwtSecretLength: process.env.JWT_SECRET?.length
+  });
+  
+  if (!token) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'No token provided',
+      debug: {
+        hasAuthHeader: !!req.headers.authorization,
+        authHeader: req.headers.authorization
+      }
+    });
+  }
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    console.log('✅ Token verificado:', decoded);
+    
+    res.json({
+      success: true,
+      message: 'Token válido',
+      decoded: {
+        id: decoded.id,
+        email: decoded.email,
+        role: decoded.role,
+        tenant_id: decoded.tenant_id
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error verificando token:', {
+      message: error.message,
+      name: error.name
+    });
+    
+    res.status(401).json({
+      success: false,
+      message: 'Token inválido',
+      error: error.message,
+      debug: {
+        jwtSecret: !!process.env.JWT_SECRET,
+        jwtSecretLength: process.env.JWT_SECRET?.length
+      }
+    });
+  }
+});
+
 // Ruta de prueba para certificados médicos
 app.get('/test-certificates', (req, res) => {
   res.json({ status: 'ok', message: 'Certificados médicos endpoint test', timestamp: new Date().toISOString() });
