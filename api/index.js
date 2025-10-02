@@ -634,18 +634,25 @@ app.post('/medicalPrescriptions', async (req, res) => {
   // Verificación de autenticación manual
   const token = req.headers.authorization?.split(' ')[1];
   
-  // Debug: Log de autenticación
-  console.log('🔍 POST /medicalPrescriptions - Autenticación:', {
+  // Debug info para incluir en respuesta
+  const debugInfo = {
     hasAuthHeader: !!req.headers.authorization,
     hasToken: !!token,
     tokenLength: token?.length,
     tokenStart: token?.substring(0, 20) + '...',
-    jwtSecret: !!process.env.JWT_SECRET
-  });
+    jwtSecret: !!process.env.JWT_SECRET,
+    timestamp: new Date().toISOString()
+  };
+  
+  console.log('🔍 POST /medicalPrescriptions - Autenticación:', debugInfo);
   
   if (!token) {
     console.log('❌ No se encontró token en el header Authorization');
-    return res.status(401).json({ success: false, message: 'Token de acceso requerido' });
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Token de acceso requerido',
+      debug: debugInfo
+    });
   }
   
   try {
@@ -661,7 +668,11 @@ app.post('/medicalPrescriptions', async (req, res) => {
     
     // Verificar que sea especialista
     if (req.user.role !== 'Especialista') {
-      return res.status(403).json({ success: false, message: 'Acceso denegado. Solo especialistas pueden crear recetas.' });
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Acceso denegado. Solo especialistas pueden crear recetas.',
+        debug: { ...debugInfo, decoded: { id: decoded.id, role: decoded.role } }
+      });
     }
     
     // Procesar creación de receta
@@ -683,7 +694,8 @@ app.post('/medicalPrescriptions', async (req, res) => {
       return res.status(500).json({
         success: false,
         message: 'Error cargando modelo de receta médica',
-        error: modelError.message
+        error: modelError.message,
+        debug: debugInfo
       });
     }
     
@@ -718,7 +730,9 @@ app.post('/medicalPrescriptions', async (req, res) => {
     res.status(401).json({ 
       success: false, 
       message: 'Token inválido',
-      error: authError.message
+      error: authError.message,
+      errorName: authError.name,
+      debug: debugInfo
     });
   }
 });
