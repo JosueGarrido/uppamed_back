@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Configuración de CORS para desarrollo y producción - ACTUALIZADO 2025-09-27
+// Configuración de CORS para desarrollo y producción - ACTUALIZADO 2025-10-02
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
