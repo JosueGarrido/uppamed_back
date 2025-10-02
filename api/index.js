@@ -591,6 +591,8 @@ app.patch('/medicalCertificates/:id/void', async (req, res) => {
 
 // Endpoints reales de recetas médicas con autenticación
 app.post('/medicalPrescriptions', async (req, res) => {
+  console.log('🚀 POST /medicalPrescriptions - ENDPOINT EJECUTADO');
+  
   // Verificación de autenticación manual
   const token = req.headers.authorization?.split(' ')[1];
   
