@@ -920,11 +920,25 @@ app.get('/medicalPrescriptions/:id', async (req, res) => {
     const { DataTypes } = require('sequelize');
     const MedicalPrescription = require('../models/medicalPrescription')(sequelize, DataTypes);
     
+    // Construir la cláusula WHERE según el rol del usuario
+    let whereClause = { id: req.params.id };
+    
+    if (req.user.role === 'Especialista') {
+      // Los especialistas solo pueden ver sus propias recetas
+      whereClause.specialist_id = req.user.id;
+    } else if (req.user.role === 'Paciente') {
+      // Los pacientes solo pueden ver recetas donde ellos son el paciente
+      whereClause.patient_id = req.user.id;
+    } else {
+      // Otros roles no tienen acceso
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permisos para ver esta receta'
+      });
+    }
+    
     const prescription = await MedicalPrescription.findOne({
-      where: {
-        id: req.params.id,
-        specialist_id: req.user.id // Solo puede ver sus propias recetas
-      }
+      where: whereClause
     });
     
     if (!prescription) {
