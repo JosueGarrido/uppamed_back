@@ -10,6 +10,16 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Middleware de logging para debug
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.path} - Headers:`, {
+    authorization: req.headers.authorization ? 'Bearer ***' : 'none',
+    contentType: req.headers['content-type'],
+    origin: req.headers.origin
+  });
+  next();
+});
+
 // Configuración de CORS para desarrollo y producción - ACTUALIZADO 2025-10-02
 const allowedOrigins = [
   'http://localhost:3000',
