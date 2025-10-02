@@ -8,7 +8,7 @@ const {
   voidMedicalCertificate,
   getPatientCertificates
 } = require('../controllers/medicalCertificateController');
-const { authenticateToken } = require('../middleware/authMiddleware');
+const { authenticateToken } = require('../middlewares/authMiddleware');
 const { authorizeRoles } = require('../middlewares/authorizeRoles');
 
 // Rutas para especialistas
