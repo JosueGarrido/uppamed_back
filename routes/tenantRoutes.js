@@ -21,8 +21,8 @@ const router = express.Router();
 router.post('/', verifyToken, authorizeRoles('Super Admin'), createTenant);
 router.get('/', verifyToken, authorizeRoles('Super Admin'), getTenants);
 
-// Rutas para Administradores - acceso a su propio tenant (DEBE IR ANTES de las rutas con parámetros)
-router.get('/my/tenant', verifyToken, authorizeRoles('Administrador'), getMyTenant);
+// Rutas para Administradores y Especialistas - acceso a su propio tenant (DEBE IR ANTES de las rutas con parámetros)
+router.get('/my/tenant', verifyToken, authorizeRoles('Administrador', 'Especialista'), getMyTenant);
 router.put('/my/tenant', verifyToken, authorizeRoles('Administrador'), updateMyTenant);
 router.get('/my/config', verifyToken, authorizeRoles('Administrador'), getMyTenantConfig);
 router.put('/my/config', verifyToken, authorizeRoles('Administrador'), updateMyTenantConfig);
