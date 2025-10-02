@@ -216,12 +216,112 @@ try {
   console.error('❌ Error cargando /specialists:', error.message);
 }
 
+// Endpoints reales de certificados médicos con autenticación
+const { authenticateToken } = require('../middlewares/authMiddleware');
+
+app.post('/medicalCertificates', authenticateToken, async (req, res) => {
+  try {
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalCertificate = require('../models/medicalCertificate')(sequelize, DataTypes);
+    
+    // Generar número de certificado único
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const timestamp = Date.now().toString().slice(-4);
+    const certificateNumber = `CERT-${year}${month}${day}-${timestamp}`;
+    
+    const certificateData = {
+      ...req.body,
+      certificate_number: certificateNumber,
+      specialist_id: req.user.id,
+      tenant_id: req.user.tenant_id
+    };
+    
+    const certificate = await MedicalCertificate.create(certificateData);
+    
+    res.json({ 
+      success: true, 
+      message: 'Certificado médico creado exitosamente',
+      data: certificate
+    });
+  } catch (error) {
+    console.error('Error in POST /medicalCertificates:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al crear el certificado médico',
+      error: error.message
+    });
+  }
+});
+
+app.get('/medicalCertificates/specialist', authenticateToken, async (req, res) => {
+  try {
+    // Cargar Sequelize y modelos correctamente
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalCertificate = require('../models/medicalCertificate')(sequelize, DataTypes);
+    
+    const { page = 1, limit = 10, search = '', status = '' } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let whereClause = {
+      specialist_id: req.user.id
+    };
+    
+    if (search) {
+      whereClause = {
+        ...whereClause,
+        [require('sequelize').Op.or]: [
+          { patient_name: { [require('sequelize').Op.like]: `%${search}%` } },
+          { diagnosis: { [require('sequelize').Op.like]: `%${search}%` } },
+          { certificate_number: { [require('sequelize').Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+    
+    if (status) {
+      whereClause.status = status;
+    }
+    
+    const { count, rows } = await MedicalCertificate.findAndCountAll({
+      where: whereClause,
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        certificates: rows,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(count / limit)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error in GET /medicalCertificates/specialist:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al obtener los certificados médicos',
+      error: error.message
+    });
+  }
+});
+
 try {
   console.log('🔄 Intentando cargar rutas de certificados médicos...');
   const medicalCertificateRoutes = require('../routes/medicalCertificateRoutes');
   console.log('📦 Rutas de certificados médicos importadas correctamente');
-  app.use('/medicalCertificates', medicalCertificateRoutes);
-  console.log('✅ Ruta /medicalCertificates cargada y registrada');
+  // app.use('/medicalCertificates', medicalCertificateRoutes); // Comentado temporalmente
+  console.log('✅ Ruta /medicalCertificates cargada y registrada (usando endpoints directos)');
 } catch (error) {
   console.error('❌ Error cargando ruta /medicalCertificates:', error.message);
   console.error('📋 Stack trace:', error.stack);
