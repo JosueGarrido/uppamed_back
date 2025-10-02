@@ -1019,18 +1019,7 @@ console.log('✅ Endpoints de recetas médicas implementados directamente');
 
 console.log('📊 Carga de rutas completada');
 
-// Rutas de fallback para evitar errores 404
-app.get('/tenants', (req, res) => {
-  res.status(500).json({ message: 'Servicio de tenants temporalmente no disponible' });
-});
-
-app.get('/users/all', (req, res) => {
-  res.status(500).json({ message: 'Servicio de usuarios temporalmente no disponible' });
-});
-
-app.post('/auth/login', (req, res) => {
-  res.status(500).json({ message: 'Servicio de autenticación temporalmente no disponible' });
-});
+// Rutas de fallback para evitar errores 404 (movidas al final)
 
 // Manejo de errores global
 app.use((err, req, res, next) => {
@@ -1049,6 +1038,19 @@ app.use((err, req, res, next) => {
     message: 'Error interno del servidor',
     error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
   });
+});
+
+// Rutas de fallback para evitar errores 404
+app.get('/tenants', (req, res) => {
+  res.status(500).json({ message: 'Servicio de tenants temporalmente no disponible' });
+});
+
+app.get('/users/all', (req, res) => {
+  res.status(500).json({ message: 'Servicio de usuarios temporalmente no disponible' });
+});
+
+app.post('/auth/login', (req, res) => {
+  res.status(500).json({ message: 'Servicio de autenticación temporalmente no disponible' });
 });
 
 // Manejo de rutas no encontradas
