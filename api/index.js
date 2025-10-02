@@ -216,8 +216,11 @@ try {
   console.error('❌ Error cargando /specialists:', error.message);
 }
 
-// Endpoints reales de certificados médicos (sin autenticación temporal)
-app.post('/medicalCertificates', async (req, res) => {
+// Endpoints reales de certificados médicos con autenticación
+const authenticate = require('../middlewares/auth');
+const checkRole = require('../middlewares/checkRole');
+
+app.post('/medicalCertificates', authenticate, checkRole(['Especialista']), async (req, res) => {
   try {
     // Cargar Sequelize y modelos correctamente
     const sequelize = require('../config/db');
@@ -235,8 +238,8 @@ app.post('/medicalCertificates', async (req, res) => {
     const certificateData = {
       ...req.body,
       certificate_number: certificateNumber,
-      specialist_id: 1, // Temporal - usar ID fijo
-      tenant_id: 1 // Temporal - usar ID fijo
+      specialist_id: req.user.id,
+      tenant_id: req.user.tenant_id
     };
     
     const certificate = await MedicalCertificate.create(certificateData);
@@ -256,7 +259,7 @@ app.post('/medicalCertificates', async (req, res) => {
   }
 });
 
-app.get('/medicalCertificates/specialist', async (req, res) => {
+app.get('/medicalCertificates/specialist', authenticate, checkRole(['Especialista']), async (req, res) => {
   try {
     // Cargar Sequelize y modelos correctamente
     const sequelize = require('../config/db');
@@ -266,7 +269,9 @@ app.get('/medicalCertificates/specialist', async (req, res) => {
     const { page = 1, limit = 10, search = '', status = '' } = req.query;
     const offset = (page - 1) * limit;
     
-    let whereClause = {};
+    let whereClause = {
+      specialist_id: req.user.id
+    };
     
     if (search) {
       whereClause = {
