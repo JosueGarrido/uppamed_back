@@ -262,14 +262,6 @@ app.post('/medicalCertificates', async (req, res) => {
       message: 'Certificado médico creado exitosamente',
       data: certificate
     });
-  } catch (error) {
-    console.error('Error in POST /medicalCertificates:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error al crear el certificado médico',
-      error: error.message
-    });
-  }
   } catch (authError) {
     console.error('Error de autenticación:', authError);
     res.status(401).json({ 
@@ -344,14 +336,6 @@ app.get('/medicalCertificates/specialist', async (req, res) => {
         }
       }
     });
-  } catch (error) {
-    console.error('Error in GET /medicalCertificates/specialist:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error al obtener los certificados médicos',
-      error: error.message
-    });
-  }
   } catch (authError) {
     console.error('Error de autenticación:', authError);
     res.status(401).json({ 
