@@ -52,8 +52,9 @@ app.get('/test-certificates', (req, res) => {
 app.get('/medicalCertificates/test', async (req, res) => {
   try {
     // Cargar Sequelize y modelos correctamente
-    const sequelize = require('../config/database');
-    const MedicalCertificate = require('../models/medicalCertificate')(sequelize, require('sequelize').DataTypes);
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalCertificate = require('../models/medicalCertificate')(sequelize, DataTypes);
     
     const { page = 1, limit = 10, search = '', status = '' } = req.query;
     const offset = (page - 1) * limit;
@@ -114,8 +115,9 @@ app.get('/medicalCertificates/test', async (req, res) => {
 app.post('/medicalCertificates/test', async (req, res) => {
   try {
     // Cargar Sequelize y modelos correctamente
-    const sequelize = require('../config/database');
-    const MedicalCertificate = require('../models/medicalCertificate')(sequelize, require('sequelize').DataTypes);
+    const sequelize = require('../config/db');
+    const { DataTypes } = require('sequelize');
+    const MedicalCertificate = require('../models/medicalCertificate')(sequelize, DataTypes);
     
     // Generar número de certificado único
     const today = new Date();
