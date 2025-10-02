@@ -108,6 +108,14 @@ try {
   console.error('❌ Error cargando /specialists:', error.message);
 }
 
+try {
+  const medicalCertificateRoutes = require('../routes/medicalCertificateRoutes');
+  app.use('/medicalCertificates', medicalCertificateRoutes);
+  console.log('✅ Ruta /medicalCertificates cargada');
+} catch (error) {
+  console.error('❌ Error cargando ruta /medicalCertificates:', error.message);
+}
+
 console.log('📊 Carga de rutas completada');
 
 // Rutas de fallback para evitar errores 404
