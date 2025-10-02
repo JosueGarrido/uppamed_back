@@ -537,6 +537,17 @@ try {
   console.error('📋 Stack trace:', error.stack);
 }
 
+try {
+  console.log('🔄 Intentando cargar rutas de recetas médicas...');
+  const medicalPrescriptionRoutes = require('../routes/medicalPrescriptionRoutes');
+  console.log('📦 Rutas de recetas médicas importadas correctamente');
+  app.use('/medicalPrescriptions', medicalPrescriptionRoutes);
+  console.log('✅ Ruta /medicalPrescriptions cargada y registrada');
+} catch (error) {
+  console.error('❌ Error cargando ruta /medicalPrescriptions:', error.message);
+  console.error('📋 Stack trace:', error.stack);
+}
+
 console.log('📊 Carga de rutas completada');
 
 // Rutas de fallback para evitar errores 404
